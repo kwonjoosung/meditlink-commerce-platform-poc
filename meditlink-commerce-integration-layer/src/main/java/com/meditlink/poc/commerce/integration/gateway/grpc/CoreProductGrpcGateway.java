@@ -8,6 +8,8 @@ import com.meditlink.poc.commerce.common.proto.v1.GetProductRequest;
 import com.meditlink.poc.commerce.common.proto.v1.GetProductResponse;
 import com.meditlink.poc.commerce.common.proto.v1.IssueCouponRequest;
 import com.meditlink.poc.commerce.common.proto.v1.IssueCouponResponse;
+import com.meditlink.poc.commerce.common.proto.v1.ListProductGroupsRequest;
+import com.meditlink.poc.commerce.common.proto.v1.ListProductPlansRequest;
 import com.meditlink.poc.commerce.common.proto.v1.CouponServiceGrpc;
 import com.meditlink.poc.commerce.common.proto.v1.PriceServiceGrpc;
 import com.meditlink.poc.commerce.common.proto.v1.ProductServiceGrpc;
@@ -15,9 +17,15 @@ import com.meditlink.poc.commerce.integration.orchestration.dto.CreateProductHtt
 import com.meditlink.poc.commerce.integration.orchestration.dto.IssueCouponHttpRequest;
 import com.meditlink.poc.commerce.integration.orchestration.dto.IssueCouponHttpResponse;
 import com.meditlink.poc.commerce.integration.orchestration.dto.PriceQuoteHttpResponse;
+import com.meditlink.poc.commerce.integration.orchestration.dto.ProductGroupHttpResponse;
 import com.meditlink.poc.commerce.integration.orchestration.dto.ProductHttpResponse;
+import com.meditlink.poc.commerce.integration.orchestration.dto.ProductPlanHttpResponse;
+import java.time.Instant;
+import java.util.List;
 import org.springframework.stereotype.Component;
 
+// gRPC Outbound Adapter
+// - integration-layer의 orchestration 로직이 core-service gRPC를 호출하는 단일 진입점
 @Component
 public class CoreProductGrpcGateway {
 
@@ -94,8 +102,47 @@ public class CoreProductGrpcGateway {
         return new IssueCouponHttpResponse(
                 response.getCode(),
                 response.getDiscountRate(),
-                java.time.Instant.ofEpochMilli(response.getExpiresAtEpochMillis()),
+                Instant.ofEpochMilli(response.getExpiresAtEpochMillis()),
                 response.getIssued()
         );
+    }
+
+    public List<ProductGroupHttpResponse> listProductGroups() {
+        return productServiceBlockingStub
+                .listProductGroups(ListProductGroupsRequest.newBuilder().build())
+                .getGroupsList()
+                .stream()
+                .map(group -> new ProductGroupHttpResponse(
+                        group.getId(),
+                        group.getCode(),
+                        group.getName()
+                ))
+                .toList();
+    }
+
+    public ProductPlansResult listProductPlans(String productId) {
+        var response = productServiceBlockingStub.listProductPlans(
+                ListProductPlansRequest.newBuilder()
+                        .setProductId(productId)
+                        .build()
+        );
+
+        List<ProductPlanHttpResponse> plans = response.getPlansList()
+                .stream()
+                .map(plan -> new ProductPlanHttpResponse(
+                        plan.getId(),
+                        plan.getProductId(),
+                        plan.getGroupId(),
+                        plan.getPlanCode(),
+                        plan.getPlanName(),
+                        plan.getPrice(),
+                        plan.getCurrency()
+                ))
+                .toList();
+
+        return new ProductPlansResult(response.getFound(), plans);
+    }
+
+    public record ProductPlansResult(boolean found, List<ProductPlanHttpResponse> plans) {
     }
 }

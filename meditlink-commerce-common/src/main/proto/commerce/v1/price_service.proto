@@ -5,6 +5,8 @@ package commerce.v1;
 option java_package = "com.meditlink.poc.commerce.common.proto.v1";
 option java_multiple_files = true;
 
+// 가격 계산은 ProductService에서 분리해 PriceService로 독립시킴
+// 이유: 이후 가격 정책/프로모션 엔진 분리 시 계약 진화를 쉽게 하기 위함
 service PriceService {
   rpc CalculatePrice(CalculatePriceRequest) returns (CalculatePriceResponse);
 }

@@ -9,6 +9,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+// integration-layer 내부 처리 상태/요청 이력을 저장하는 최소 엔티티
 @Entity
 @Table(name = "integration_request_logs")
 public class IntegrationRequestLogJpaEntity {

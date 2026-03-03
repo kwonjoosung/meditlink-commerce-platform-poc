@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// Product 모듈의 HTTP Inbound Adapter
+// - REST 요청을 use case 입력으로 변환
 @RestController
 @RequestMapping("/api/products")
 public class ProductCommandController {

@@ -9,6 +9,7 @@ import io.grpc.stub.StreamObserver;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
+// Price gRPC Inbound Adapter
 @Service
 public class PriceGrpcEndpoint extends PriceServiceGrpc.PriceServiceImplBase {
 

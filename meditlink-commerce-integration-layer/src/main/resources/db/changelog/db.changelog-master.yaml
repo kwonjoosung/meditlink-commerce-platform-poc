@@ -1,3 +1,4 @@
 databaseChangeLog:
+  # integration 요청/오케스트레이션 처리 로그 저장용 테이블
   - include:
       file: db/changelog/changes/0001-integration-request-logs.yaml

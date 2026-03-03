@@ -1,5 +1,6 @@
 package com.meditlink.poc.commerce.core.product.domain;
 
+// Product 원장 엔티티(도메인 모델)
 public record Product(
         Long id,
         String sku,

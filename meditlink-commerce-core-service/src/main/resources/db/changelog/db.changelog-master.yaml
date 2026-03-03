@@ -1,3 +1,8 @@
 databaseChangeLog:
+  # 초기 product/catalog/price/coupon 베이스 테이블
   - include:
       file: db/changelog/changes/0001-initial-product-domain.yaml
+
+  # 학습 확장: product group/plan 테이블 추가
+  - include:
+      file: db/changelog/changes/0002-product-group-plan.yaml

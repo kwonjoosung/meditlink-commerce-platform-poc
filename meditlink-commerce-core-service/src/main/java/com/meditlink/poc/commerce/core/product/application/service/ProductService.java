@@ -10,6 +10,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+// Product 생성/단건조회 유스케이스 구현체
+// - 포트에만 의존하고, 구체 기술(JPA 등)은 adapter.out으로 위임
 @Service
 @Transactional
 public class ProductService implements CreateProductUseCase, GetProductUseCase {

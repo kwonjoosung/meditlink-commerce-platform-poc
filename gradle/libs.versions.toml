@@ -1,3 +1,7 @@
+# 학습 포인트: Version Catalog
+# - 의존성/플러그인 버전을 중앙에서 선언해서 모듈 간 버전 드리프트를 방지
+# - 각 build.gradle.kts에서는 libs.xxx 별칭으로 간결하게 참조
+
 [versions]
 java = "25"
 spring-boot = "4.0.0"

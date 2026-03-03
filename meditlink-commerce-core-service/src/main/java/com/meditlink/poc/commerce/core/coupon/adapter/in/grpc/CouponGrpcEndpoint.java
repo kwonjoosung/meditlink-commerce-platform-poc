@@ -10,6 +10,7 @@ import io.grpc.stub.StreamObserver;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
 
+// Coupon gRPC Inbound Adapter
 @Service
 public class CouponGrpcEndpoint extends CouponServiceGrpc.CouponServiceImplBase {
 

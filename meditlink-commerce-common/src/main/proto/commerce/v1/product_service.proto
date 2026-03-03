@@ -5,9 +5,15 @@ package commerce.v1;
 option java_package = "com.meditlink.poc.commerce.common.proto.v1";
 option java_multiple_files = true;
 
+// ProductService는 core-service의 Product 모듈을 외부(integration-layer)에서 호출하기 위한
+// gRPC 진입점 계약(Contract)이다.
 service ProductService {
   rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse);
   rpc GetProduct(GetProductRequest) returns (GetProductResponse);
+
+  // 학습 포인트: product group / product plan 조회를 gRPC로 노출
+  rpc ListProductGroups(ListProductGroupsRequest) returns (ListProductGroupsResponse);
+  rpc ListProductPlans(ListProductPlansRequest) returns (ListProductPlansResponse);
 }
 
 message CreateProductRequest {
@@ -32,4 +38,35 @@ message GetProductResponse {
   int64 base_price = 4;
   string currency = 5;
   bool found = 6;
+}
+
+message ListProductGroupsRequest {}
+
+message ProductGroupItem {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+}
+
+message ListProductGroupsResponse {
+  repeated ProductGroupItem groups = 1;
+}
+
+message ListProductPlansRequest {
+  string product_id = 1;
+}
+
+message ProductPlanItem {
+  string id = 1;
+  string product_id = 2;
+  string group_id = 3;
+  string plan_code = 4;
+  string plan_name = 5;
+  int64 price = 6;
+  string currency = 7;
+}
+
+message ListProductPlansResponse {
+  bool found = 1;
+  repeated ProductPlanItem plans = 2;
 }

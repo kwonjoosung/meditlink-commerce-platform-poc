@@ -1,12 +1,16 @@
 package com.meditlink.poc.commerce.integration.bff.web;
 
+import com.meditlink.poc.commerce.integration.gateway.grpc.CoreProductGrpcGateway;
 import com.meditlink.poc.commerce.integration.orchestration.ProductOrchestrationService;
 import com.meditlink.poc.commerce.integration.orchestration.dto.CreateProductHttpRequest;
 import com.meditlink.poc.commerce.integration.orchestration.dto.IssueCouponHttpRequest;
 import com.meditlink.poc.commerce.integration.orchestration.dto.IssueCouponHttpResponse;
 import com.meditlink.poc.commerce.integration.orchestration.dto.PriceQuoteHttpResponse;
+import com.meditlink.poc.commerce.integration.orchestration.dto.ProductGroupHttpResponse;
 import com.meditlink.poc.commerce.integration.orchestration.dto.ProductHttpResponse;
+import com.meditlink.poc.commerce.integration.orchestration.dto.ProductPlanHttpResponse;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +21,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+// BFF Adapter
+// - 클라이언트 친화적인 REST API 제공
+// - 내부적으로 orchestration + gRPC 호출 흐름을 숨김
 @RestController
 @RequestMapping("/api/bff")
 public class ProductBffController {
@@ -58,6 +65,20 @@ public class ProductBffController {
     public ResponseEntity<IssueCouponHttpResponse> issueCoupon(@Valid @RequestBody IssueCouponHttpRequest request) {
         IssueCouponHttpResponse response = productOrchestrationService.issueCoupon(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/product-groups")
+    public ResponseEntity<List<ProductGroupHttpResponse>> listProductGroups() {
+        return ResponseEntity.ok(productOrchestrationService.listProductGroups());
+    }
+
+    @GetMapping("/products/{productId}/plans")
+    public ResponseEntity<List<ProductPlanHttpResponse>> listProductPlans(@PathVariable String productId) {
+        CoreProductGrpcGateway.ProductPlansResult result = productOrchestrationService.listProductPlans(productId);
+        if (!result.found()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(result.plans());
     }
 
     public record CreateProductBffResponse(String productId) {

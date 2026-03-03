@@ -5,10 +5,15 @@ import com.meditlink.poc.commerce.integration.orchestration.dto.CreateProductHtt
 import com.meditlink.poc.commerce.integration.orchestration.dto.IssueCouponHttpRequest;
 import com.meditlink.poc.commerce.integration.orchestration.dto.IssueCouponHttpResponse;
 import com.meditlink.poc.commerce.integration.orchestration.dto.PriceQuoteHttpResponse;
+import com.meditlink.poc.commerce.integration.orchestration.dto.ProductGroupHttpResponse;
 import com.meditlink.poc.commerce.integration.orchestration.dto.ProductHttpResponse;
+import com.meditlink.poc.commerce.integration.orchestration.dto.ProductPlanHttpResponse;
 import com.meditlink.poc.commerce.integration.state.RequestLogService;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
+// orchestration 계층
+// - BFF 요청 흐름을 묶고, gateway 호출 + 상태 로그를 관리
 @Service
 public class ProductOrchestrationService {
 
@@ -42,5 +47,20 @@ public class ProductOrchestrationService {
         IssueCouponHttpResponse response = coreProductGrpcGateway.issueCoupon(request);
         requestLogService.log("ISSUE_COUPON", response.code(), response.issued() ? "SUCCESS" : "FAILED", null);
         return response;
+    }
+
+    public List<ProductGroupHttpResponse> listProductGroups() {
+        List<ProductGroupHttpResponse> response = coreProductGrpcGateway.listProductGroups();
+        requestLogService.log("LIST_PRODUCT_GROUPS", null, "SUCCESS", null);
+        return response;
+    }
+
+    public CoreProductGrpcGateway.ProductPlansResult listProductPlans(String productId) {
+        CoreProductGrpcGateway.ProductPlansResult response = coreProductGrpcGateway.listProductPlans(productId);
+        requestLogService.log("LIST_PRODUCT_PLANS", productId, response.found() ? "SUCCESS" : "NOT_FOUND", null);
+        return response;
+    }
+
+    public record ProductPlansResult(boolean found, List<ProductPlanHttpResponse> plans) {
     }
 }

@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+// 학습 포인트: gRPC client 공통 설정
+// - 하나의 ManagedChannel을 재사용
+// - 서비스별 BlockingStub를 Bean으로 노출해 orchestration에서 사용
 @Configuration
 public class CoreGrpcClientConfig {
 

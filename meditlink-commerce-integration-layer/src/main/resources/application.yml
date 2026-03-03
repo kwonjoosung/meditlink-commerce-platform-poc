@@ -1,10 +1,13 @@
 spring:
   application:
     name: meditlink-commerce-integration-layer
+
+  # integration-layer 자체 상태 저장 DB
   datasource:
     url: jdbc:postgresql://localhost:5432/meditlink_integration
     username: postgres
     password: postgres
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -12,12 +15,14 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 server:
   port: 8080
 
+# core-service gRPC endpoint
 core:
   grpc:
     host: localhost
