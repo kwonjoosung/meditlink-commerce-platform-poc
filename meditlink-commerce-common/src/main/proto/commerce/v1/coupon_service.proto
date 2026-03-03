@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package commerce.v1;
+
+option java_package = "com.meditlink.poc.commerce.common.proto.v1";
+option java_multiple_files = true;
+
+service CouponService {
+  rpc IssueCoupon(IssueCouponRequest) returns (IssueCouponResponse);
+}
+
+message IssueCouponRequest {
+  string code = 1;
+  int32 discount_rate = 2;
+  int64 expires_at_epoch_millis = 3;
+}
+
+message IssueCouponResponse {
+  string code = 1;
+  int32 discount_rate = 2;
+  int64 expires_at_epoch_millis = 3;
+  bool issued = 4;
+}

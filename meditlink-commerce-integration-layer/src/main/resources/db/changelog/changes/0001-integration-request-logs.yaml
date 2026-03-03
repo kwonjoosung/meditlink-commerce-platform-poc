@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0001-01-create-integration-request-logs
+      author: codex
+      changes:
+        - createTable:
+            tableName: integration_request_logs
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: request_type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reference_id
+                  type: VARCHAR(100)
+              - column:
+                  name: status
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payload_json
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: integration_request_logs
+            indexName: idx_integration_request_logs_type_created_at
+            columns:
+              - column:
+                  name: request_type
+              - column:
+                  name: created_at

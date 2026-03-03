@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: meditlink-commerce-core-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/meditlink_commerce
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+server:
+  port: 8081
+
+grpc:
+  server:
+    port: 9090
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
