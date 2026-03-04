@@ -1,56 +1,59 @@
 # meditlink-commerce-platform-poc
 
-학습용 PoC: `Gradle Multi Module + Spring Modulith + Hexagonal + gRPC`
+학습용 PoC: `Gradle Multi Module + Spring Modulith + Hexagonal + gRPC + Jib + Docker Compose`
 
 ## 1. 모듈 구조
 
-- `meditlink-commerce-common`
-: gRPC schema contract(`proto`)와 generated stub 공유 모듈
-- `meditlink-commerce-core-service`
-: 핵심 도메인 서비스 (Modulith + Hexagonal)
-- `meditlink-commerce-integration-layer`
-: 외부 채널/API 통합 계층 (`bff/orchestration/gateway/admin/webhook`)
+- `meditlink-commerce-common-proto`
+: gRPC schema contract(`proto`) + generated stub 공유 모듈
+- `meditlink-commerce-core`
+: 핵심 도메인 서비스 (Modulith + Hexagonal, HTTP 8081 / gRPC 9090)
+- `meditlink-commerce-client`
+: 외부 채널/API 통합 계층 (`bff/orchestration/gateway/admin/webhook`, HTTP 8080)
 
-## 2. 왜 멀티 모듈인가?
+## 2. DB 전략 (요청 반영)
 
-- `common`으로 계약(Contract)을 고정해 core/integration의 결합도를 낮춤
-- core 도메인 변경과 integration 채널 변경을 분리 배포하기 쉬워짐
-- 학습 관점에서 “계약 계층”과 “비즈니스 계층”의 책임 분리가 명확함
+- PostgreSQL 컨테이너는 **1개**만 사용
+- 데이터베이스는 `meditlink_commerce` 하나를 사용
+- 논리 분리는 스키마로 수행
+1. `core` 스키마: core 모듈 테이블
+2. `client` 스키마: client 모듈 테이블
 
-## 3. 왜 Spring Modulith인가?
+초기 스키마 생성 SQL: [01-init-schemas.sql](/Users/medit/IdeaProjects/codex/commerce_test/docker/postgres/init/01-init-schemas.sql)
 
-- 하나의 배포 단위(모놀리스) 안에서 모듈 경계를 강제할 수 있음
-- `package-info.java` + `@ApplicationModule`로 의존 허용 범위를 선언
-- `ApplicationModules.verify()` 테스트로 아키텍처 회귀를 조기 탐지
+## 3. Jib Dockerizing
 
-## 4. 왜 Hexagonal(Port & Adapter)인가?
+- core 이미지: `meditlink/commerce-core:local`
+- client 이미지: `meditlink/commerce-client:local`
+- `Dockerfile` 없이 Gradle Jib로 이미지 빌드
 
-- 도메인/유스케이스를 외부 기술(JPA, HTTP, gRPC)과 분리
-- `application.port.in/out`은 계약, `adapter.in/out`은 구현
-- gRPC/REST/JPA 기술이 바뀌어도 핵심 유스케이스 영향 최소화
+직접 빌드 명령:
+```bash
+./gradlew :meditlink-commerce-core:jibDockerBuild :meditlink-commerce-client:jibDockerBuild
+```
 
-## 5. Product Group / Plan 모델
+## 4. 원클릭 배포 (docker compose)
 
-- `product_groups(id, code, name)`
-- `product_plans(id, product_id, group_id, plan_code, plan_name, price, currency)`
+- 실행 스크립트: [compose-up.sh](/Users/medit/IdeaProjects/codex/commerce_test/scripts/compose-up.sh)
+- 종료 스크립트: [compose-down.sh](/Users/medit/IdeaProjects/codex/commerce_test/scripts/compose-down.sh)
+- Compose 파일: [docker-compose.yml](/Users/medit/IdeaProjects/codex/commerce_test/docker-compose.yml)
 
-## 6. 실행 전 준비
+실행:
+```bash
+./scripts/compose-up.sh
+```
 
-- JDK 25
-- PostgreSQL 2개 DB
-1. `meditlink_commerce`
-2. `meditlink_integration`
+중지:
+```bash
+./scripts/compose-down.sh
+```
 
-기본 계정(샘플)
-- username: `postgres`
-- password: `postgres`
+볼륨까지 삭제:
+```bash
+./scripts/compose-down.sh --volumes
+```
 
-## 7. 실행 순서
-
-1. `meditlink-commerce-core-service` 실행 (`8081`, gRPC `9090`)
-2. `meditlink-commerce-integration-layer` 실행 (`8080`)
-
-## 8. 샘플 호출 시나리오 (integration-layer 기준)
+## 5. 샘플 호출 시나리오 (client 기준)
 
 1. 상품 생성
 ```bash
@@ -85,11 +88,3 @@ curl http://localhost:8080/api/bff/product-groups
 ```bash
 curl http://localhost:8080/api/bff/products/{productId}/plans
 ```
-
-## 9. 학습 포인트 추천 순서
-
-1. `settings.gradle.kts` / 루트 `build.gradle.kts`
-2. `common`의 `proto`와 generated stub
-3. core의 `product` 모듈(`port` → `service` → `adapter`)
-4. integration의 `gateway.grpc`와 `orchestration`
-5. Liquibase changelog로 스키마 진화 방식 확인

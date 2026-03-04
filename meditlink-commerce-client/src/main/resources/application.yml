@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: meditlink-commerce-client
+
+  # 단일 PostgreSQL DB + client 스키마 분리
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:meditlink_commerce}?currentSchema=${DB_SCHEMA:client}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: ${DB_SCHEMA:client}
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: ${DB_SCHEMA:client}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+# core gRPC endpoint
+core:
+  grpc:
+    host: ${CORE_GRPC_HOST:localhost}
+    port: ${CORE_GRPC_PORT:9090}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

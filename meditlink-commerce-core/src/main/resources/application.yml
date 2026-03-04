@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: meditlink-commerce-core
+
+  # 단일 PostgreSQL DB + core 스키마 분리
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:meditlink_commerce}?currentSchema=${DB_SCHEMA:core}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: ${DB_SCHEMA:core}
+        format_sql: true
+
+  # Liquibase로 DDL 이력 관리
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: ${DB_SCHEMA:core}
+
+server:
+  port: ${SERVER_PORT:8081}
+
+# client가 호출할 gRPC 서버 포트
+grpc:
+  server:
+    port: ${GRPC_SERVER_PORT:9090}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

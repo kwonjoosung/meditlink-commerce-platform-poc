@@ -18,9 +18,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "meditlink-commerce-platform-poc"
 
-// 공통 계약(common) / 핵심 도메인(core) / 대외 연동(integration) 경계를 모듈로 분리
+// 공통 계약(common-proto) / 핵심 도메인(core) / 클라이언트 채널(client) 경계를 모듈로 분리
 include(
-    "meditlink-commerce-common",
-    "meditlink-commerce-core-service",
-    "meditlink-commerce-integration-layer"
+    "meditlink-commerce-common-proto",
+    "meditlink-commerce-core",
+    "meditlink-commerce-client"
 )

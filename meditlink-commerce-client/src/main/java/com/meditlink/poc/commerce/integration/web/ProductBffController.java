@@ -1,4 +1,4 @@
-package com.meditlink.poc.commerce.integration.bff.web;
+package com.meditlink.poc.commerce.integration.web;
 
 import com.meditlink.poc.commerce.integration.gateway.grpc.CoreProductGrpcGateway;
 import com.meditlink.poc.commerce.integration.orchestration.ProductOrchestrationService;
