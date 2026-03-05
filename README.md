@@ -11,31 +11,40 @@
 - `meditlink-commerce-client`
 : 외부 채널/API 통합 계층 (`bff/orchestration/gateway/admin/webhook`, HTTP 8080)
 
-## 2. DB 전략 (요청 반영)
+## 2. DB 전략
 
-- PostgreSQL 컨테이너는 **1개**만 사용
-- 데이터베이스는 `meditlink_commerce` 하나를 사용
-- 논리 분리는 스키마로 수행
-1. `core` 스키마: core 모듈 테이블
-2. `client` 스키마: client 모듈 테이블
+- PostgreSQL 컨테이너 1개
+- 데이터베이스 1개: `meditlink_commerce`
+- 스키마 분리
+1. `core` 스키마
+2. `client` 스키마
 
 초기 스키마 생성 SQL: [01-init-schemas.sql](/Users/medit/IdeaProjects/codex/commerce_test/docker/postgres/init/01-init-schemas.sql)
 
-## 3. Jib Dockerizing
+## 3. Jib Dockerizing (Apple Silicon + Linux 배포 대응)
 
 - core 이미지: `meditlink/commerce-core:local`
 - client 이미지: `meditlink/commerce-client:local`
-- `Dockerfile` 없이 Gradle Jib로 이미지 빌드
+- `Dockerfile` 없이 Gradle Jib 사용
 
-직접 빌드 명령:
+아키텍처 제어:
+- 로컬 Apple Silicon: `arm64` (기본)
+- Linux 배포: `amd64` (속성 오버라이드)
+
+직접 빌드:
 ```bash
+# 로컬(기본 arm64)
 ./gradlew :meditlink-commerce-core:jibDockerBuild :meditlink-commerce-client:jibDockerBuild
+
+# Linux 배포용 amd64 이미지
+./gradlew :meditlink-commerce-core:jibDockerBuild :meditlink-commerce-client:jibDockerBuild -PjibTargetArch=amd64
 ```
 
 ## 4. 원클릭 배포 (docker compose)
 
 - 실행 스크립트: [compose-up.sh](/Users/medit/IdeaProjects/codex/commerce_test/scripts/compose-up.sh)
 - 종료 스크립트: [compose-down.sh](/Users/medit/IdeaProjects/codex/commerce_test/scripts/compose-down.sh)
+- Linux 이미지 빌드 스크립트: [jib-build-linux.sh](/Users/medit/IdeaProjects/codex/commerce_test/scripts/jib-build-linux.sh)
 - Compose 파일: [docker-compose.yml](/Users/medit/IdeaProjects/codex/commerce_test/docker-compose.yml)
 
 실행:

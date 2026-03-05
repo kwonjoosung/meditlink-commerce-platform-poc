@@ -34,6 +34,9 @@
 - 논리 분리는 스키마로 수행: `core`, `client`
 - 컨테이너 이미지는 Jib로 빌드
 - 원클릭 실행은 `./scripts/compose-up.sh` 사용
+- 아키텍처 정책
+1. 로컬 Apple Silicon: `arm64` 빌드
+2. Linux 배포: `amd64` 빌드 (`-PjibTargetArch=amd64`)
 
 ## 6) 실행 기본값
 - core HTTP: `8081`, core gRPC: `9090`
@@ -51,3 +54,4 @@
 - 2026-03-03: Boot 4.x 정합화, integration 상태 저장 추가, gRPC(price/coupon) 확장
 - 2026-03-03: 학습용 주석 강화 + product group/plan(gRPC/REST/DDL) 확장
 - 2026-03-04: 모듈명 리네이밍, Jib dockerizing, 단일 Postgres+스키마 분리, docker compose 원클릭 배포 추가
+- 2026-03-05: Apple Silicon/ Linux 아키텍처 가변 Jib 빌드 지원 + compose 기동 검증

@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.jib)
 }
 
+// 기본값은 Apple Silicon 로컬 실행을 위한 arm64
+// Linux 배포 이미지는 -PjibTargetArch=amd64 로 오버라이드
+val jibTargetArch = providers.gradleProperty("jibTargetArch").orElse("arm64").get()
+
 dependencies {
     implementation(project(":meditlink-commerce-common-proto"))
 
@@ -26,13 +30,24 @@ dependencies {
 }
 
 jib {
+    // Java 25 클래스 파일 파싱 이슈 회피를 위해 packaged 모드 사용
+    // (Boot JAR를 그대로 컨테이너에 적재)
+    containerizingMode = "packaged"
+
     from {
         image = "eclipse-temurin:25-jre"
+        platforms {
+            platform {
+                os = "linux"
+                architecture = jibTargetArch
+            }
+        }
     }
     to {
         image = "meditlink/commerce-client:local"
     }
     container {
+        mainClass = "com.meditlink.poc.commerce.integration.IntegrationLayerApplication"
         ports = listOf("8080")
         creationTime = "USE_CURRENT_TIMESTAMP"
         jvmFlags = listOf("-Dfile.encoding=UTF-8", "-Duser.timezone=Asia/Seoul")
