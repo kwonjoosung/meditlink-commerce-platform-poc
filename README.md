@@ -97,3 +97,14 @@ curl http://localhost:8080/api/bff/product-groups
 ```bash
 curl http://localhost:8080/api/bff/products/{productId}/plans
 ```
+
+## 6. 다음 에이전트 시작 가이드
+
+- 인수인계 문서: [NEXT_AGENT_HANDOFF.md](/Users/medit/IdeaProjects/codex/commerce_test/NEXT_AGENT_HANDOFF.md)
+- 세션 메모리: [MEMORY_BANK.md](/Users/medit/IdeaProjects/codex/commerce_test/MEMORY_BANK.md)
+- 부트스트랩 스크립트: [next-agent-bootstrap.sh](/Users/medit/IdeaProjects/codex/commerce_test/scripts/next-agent-bootstrap.sh)
+
+시작 권장:
+```bash
+./scripts/next-agent-bootstrap.sh
+```
