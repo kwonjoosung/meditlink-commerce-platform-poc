@@ -241,13 +241,15 @@ com.meditlink.poc.commerce.core/
 
 ---
 
-## Step 8: 통합 테스트 + PoC 검증 ⬜
+## Step 8: 통합 테스트 + PoC 검증 ✅
 
 **작업:**
-1. E2E 시나리오 테스트
-2. ArchUnit 테스트
-3. ModulithStructureTest 업데이트
-4. 예시 데이터 시드
+1. E2E 시나리오 테스트 (ProductScenarioTest — 인메모리 Repository + Stub Stripe)
+2. ArchUnit 테스트 (7개 아키텍처 규칙)
+3. 기존 ModulithStructureTest 유지 (이미 통과)
+4. 예시 데이터 — docker/postgres/init/04-core-dummy-data.sql (Step 1에서 완료)
+
+**테스트:** 전체 108개 테스트 통과
 
 ---
 

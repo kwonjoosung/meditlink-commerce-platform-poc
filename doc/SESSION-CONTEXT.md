@@ -14,19 +14,20 @@
 - **완료**: Step 5 (Product BC — Application Service)
 - **완료**: Step 6 (REST API + Module API)
 - **완료**: Step 7 (Stripe 동기화)
-- **다음**: Step 8 (통합 테스트 + PoC 검증)
+- **완료**: Step 8 (통합 테스트 + PoC 검증)
 - **전체 계획**: `doc/IMPLEMENTATION-PLAN.md` 참조
+- **전체 테스트**: 108개 통과
 
 ## 마지막 커밋
 
-- Step 2 커밋 — feat: Step 2 - Rule Engine + Attribute 시스템 구현
+- Step 8 커밋 — test: Step 8 - 통합 테스트 + PoC 검증
 
 ## 핵심 결정사항
 
 1. 패키지 루트: `com.meditlink.poc.commerce.core` 유지
 2. 기존 코드 전부 제거 후 재작성 (coupon, gRPC 유지)
 3. Domain ↔ JPA Entity 분리 (순수 도메인 + 별도 Entity + Mapper)
-4. JSONB 매핑: Hypersistence Utils
+4. JSONB 매핑: Hypersistence Utils (hibernate-70 v3.15.2)
 5. Liquibase: 새로 시작 (기존 changeset 삭제)
 6. **Catalog → ProductGroup 리네이밍** (INDEX.md, IMPLEMENTATION-PLAN.md에 매핑 기록)
 
@@ -36,17 +37,16 @@
 |------|------|
 | `doc/IMPLEMENTATION-PLAN.md` | 전체 구현 계획, 패키지 구조, 결정사항 |
 | `doc/INDEX.md` | 설계 문서 네비게이션 + 리네이밍 규칙 |
-| `doc/RULE-ENGINE.md` | Step 2 구현 시 참조 (Rule 구조, 연산자, PriceSelector) |
-| `doc/PRODUCT-BC.md` | Step 3 구현 시 참조 (도메인 모델, 불변식) |
+| `doc/RULE-ENGINE.md` | Rule 구조, 연산자, PriceSelector |
+| `doc/PRODUCT-BC.md` | 도메인 모델, 불변식 |
 | `doc/ARCHITECTURE.md` | 레이어 규칙, 의존성 방향 |
 
-## Step 2 작업 요약
+## Step 8 작업 요약
 
-shared/ 패키지에 다음을 구현:
-1. `shared/domain/` — ProductGroupId, ProductId, PriceId (UUID wrapper record)
-2. `shared/infra/rule/` — Rule(sealed), CompositeRule, LeafRule, RuleOperator, RuleContext, RuleEngine, RuleOperators, RuleValidator, RuleDeserializer, PriceSelector
-3. Attribute 시스템 — ProductGroupAttribute, ProductAttribute, PriceAttribute enum, AttributeReader
-4. 테스트: RuleEngineTest, PriceSelectorTest, RuleValidatorTest, AttributeReaderTest
+1. `ArchitectureTest` — ArchUnit 7개 규칙 (domain 순수성, 모듈 경계, 레이어 의존성)
+2. `ProductScenarioTest` — 인메모리 Repository + Stub Stripe로 전체 시나리오 검증
+   - ProductGroup 생성/활성화 → Product 생성 → Feature 추가 → Price 생성 → 조회
+   - 에러 시나리오 (존재하지 않는 ProductGroup, DRAFT가 아닌 ProductGroup 삭제)
 
 ## 프로젝트 규칙 (CLAUDE.md 요약)
 
