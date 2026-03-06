@@ -194,7 +194,7 @@ com.meditlink.poc.commerce.core/
 
 ---
 
-## Step 4: Product BC — Persistence ⬜
+## Step 4: Product BC — Persistence ✅
 
 **작업:**
 1. JPA Entity 4개 (JSONB/TEXT[] 매핑)

@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * JSONB(JsonNode 또는 Map) → Rule 변환.
@@ -54,6 +56,31 @@ public final class RuleDeserializer {
             }
         }
         return new CompositeRule(type, rules);
+    }
+
+    /**
+     * Rule → Map (JSONB 저장용).
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> serialize(Rule rule) {
+        if (rule == null) return null;
+        return MAPPER.convertValue(serializeToRaw(rule), Map.class);
+    }
+
+    private static Object serializeToRaw(Rule rule) {
+        if (rule instanceof LeafRule leaf) {
+            var map = new LinkedHashMap<String, Object>();
+            map.put("field", leaf.field());
+            map.put("op", leaf.op());
+            map.put("value", leaf.value());
+            return map;
+        } else if (rule instanceof CompositeRule composite) {
+            var map = new LinkedHashMap<String, Object>();
+            map.put("type", composite.type());
+            map.put("rules", composite.rules().stream().map(RuleDeserializer::serializeToRaw).toList());
+            return map;
+        }
+        throw new IllegalArgumentException("알 수 없는 Rule 타입: " + rule.getClass());
     }
 
     private static Object convertValue(JsonNode node) {
