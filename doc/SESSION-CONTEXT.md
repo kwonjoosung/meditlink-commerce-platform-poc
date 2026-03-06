@@ -13,7 +13,8 @@
 - **완료**: Step 4 (Product BC — Persistence)
 - **완료**: Step 5 (Product BC — Application Service)
 - **완료**: Step 6 (REST API + Module API)
-- **다음**: Step 7 (Stripe 동기화)
+- **완료**: Step 7 (Stripe 동기화)
+- **다음**: Step 8 (통합 테스트 + PoC 검증)
 - **전체 계획**: `doc/IMPLEMENTATION-PLAN.md` 참조
 
 ## 마지막 커밋

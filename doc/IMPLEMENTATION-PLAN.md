@@ -230,7 +230,7 @@ com.meditlink.poc.commerce.core/
 
 ---
 
-## Step 7: Stripe 동기화 ⬜
+## Step 7: Stripe 동기화 ✅
 
 **작업:**
 1. Port 인터페이스 2개
