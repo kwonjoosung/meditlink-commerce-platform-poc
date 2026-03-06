@@ -218,7 +218,7 @@ com.meditlink.poc.commerce.core/
 
 ---
 
-## Step 6: REST API + Module API ⬜
+## Step 6: REST API + Module API ✅
 
 **작업:**
 1. ProductController (전체 CRUD)

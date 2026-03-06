@@ -12,7 +12,8 @@
 - **완료**: Step 3 (Product BC — Domain 모델)
 - **완료**: Step 4 (Product BC — Persistence)
 - **완료**: Step 5 (Product BC — Application Service)
-- **다음**: Step 6 (REST API + Module API)
+- **완료**: Step 6 (REST API + Module API)
+- **다음**: Step 7 (Stripe 동기화)
 - **전체 계획**: `doc/IMPLEMENTATION-PLAN.md` 참조
 
 ## 마지막 커밋
