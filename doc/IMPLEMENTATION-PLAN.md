@@ -172,7 +172,7 @@ com.meditlink.poc.commerce.core/
 
 ---
 
-## Step 2: Shared 모듈 — Rule Engine + Attribute 시스템 ⬜
+## Step 2: Shared 모듈 — Rule Engine + Attribute 시스템 ✅
 
 **작업:**
 1. shared/domain/ — ProductGroupId, ProductId, PriceId (UUID wrapper record)
