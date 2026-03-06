@@ -183,7 +183,7 @@ com.meditlink.poc.commerce.core/
 
 ---
 
-## Step 3: Product BC — Domain 모델 ⬜
+## Step 3: Product BC — Domain 모델 ✅
 
 **작업:**
 1. domain/productgroup/ — ProductGroup, ProductGroupStatus

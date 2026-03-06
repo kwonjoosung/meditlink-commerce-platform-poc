@@ -9,7 +9,8 @@
 
 - **완료**: Step 1 (프로젝트 구조 전환 + 의존성 정비)
 - **완료**: Step 2 (Shared 모듈 — Rule Engine + Attribute 시스템)
-- **다음**: Step 3 (Product BC — Domain 모델)
+- **완료**: Step 3 (Product BC — Domain 모델)
+- **다음**: Step 4 (Product BC — Persistence)
 - **전체 계획**: `doc/IMPLEMENTATION-PLAN.md` 참조
 
 ## 마지막 커밋
