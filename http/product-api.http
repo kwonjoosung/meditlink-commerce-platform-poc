@@ -1,0 +1,528 @@
+### ============================================
+### Product BC API 테스트 시나리오
+### IntelliJ HTTP Client 용 (.http)
+### 서버: http://localhost:8081
+### ============================================
+
+### 환경 변수 (응답에서 자동 추출)
+@baseUrl = http://localhost:8081/api
+
+
+### ============================================
+### 1. ProductGroup CRUD
+### ============================================
+
+### 1-1. ProductGroup 생성
+# slug가 unique이므로 기존 더미데이터와 충돌하지 않는 값으로 설정
+POST {{baseUrl}}/product-groups
+Content-Type: application/json
+
+{
+  "name": "Video Suite",
+  "slug": "video-suite",
+  "description": "비디오 편집 도구 모음",
+  "attributes": {
+    "product_group_type": "plan_tier"
+  },
+  "metadata": {},
+  "tags": ["video", "creative"]
+}
+
+> {%
+    client.global.set("productGroupId", response.body.productGroupId);
+    client.test("ProductGroup 생성 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+        client.assert(response.body.status === "DRAFT", "Status는 DRAFT");
+    });
+%}
+
+###
+
+### 1-2. ProductGroup 활성화
+POST {{baseUrl}}/product-groups/{{productGroupId}}/activate
+Content-Type: application/json
+
+> {%
+    client.test("ProductGroup 활성화 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.status === "ACTIVE", "Status는 ACTIVE");
+    });
+%}
+
+###
+
+### 1-3. ProductGroup 단건 조회
+GET {{baseUrl}}/product-groups/{{productGroupId}}
+
+> {%
+    client.test("ProductGroup 조회 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.name === "Video Suite", "이름 일치");
+    });
+%}
+
+###
+
+### 1-4. ProductGroup 전체 목록 조회
+GET {{baseUrl}}/product-groups
+
+> {%
+    client.test("ProductGroup 목록 조회 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.length >= 1, "1개 이상");
+    });
+%}
+
+###
+
+### 1-5. ProductGroup 수정
+PUT {{baseUrl}}/product-groups/{{productGroupId}}
+Content-Type: application/json
+
+{
+  "name": "Video Suite Pro",
+  "slug": "video-suite-pro",
+  "description": "프로페셔널 비디오 편집 도구 모음",
+  "attributes": {
+    "product_group_type": "plan_tier",
+    "upgraded": true
+  },
+  "metadata": {},
+  "tags": ["design", "creative", "pro"]
+}
+
+> {%
+    client.test("ProductGroup 수정 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.name === "Video Suite Pro", "이름 변경됨");
+    });
+%}
+
+
+### ============================================
+### 2. Product CRUD
+### ============================================
+
+### 2-1. Product 생성 (Pro Plan — RECURRING)
+POST {{baseUrl}}/product-groups/{{productGroupId}}/products
+Content-Type: application/json
+
+{
+  "name": "Pro Plan",
+  "description": "프로 플랜 — 월간 구독",
+  "type": "PLAN",
+  "billingType": "RECURRING",
+  "condition": null,
+  "attributes": {
+    "tier": 2,
+    "recommended": true
+  },
+  "metadata": {},
+  "tags": ["premium", "popular"]
+}
+
+> {%
+    client.global.set("productId", response.body.productId);
+    client.test("Product 생성 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+        client.assert(response.body.status === "ACTIVE", "Status는 ACTIVE");
+        client.assert(response.body.name === "Pro Plan", "이름 일치");
+    });
+%}
+
+###
+
+### 2-2. Product 단건 조회
+GET {{baseUrl}}/products/{{productId}}
+
+> {%
+    client.test("Product 조회 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.productId === client.global.get("productId"), "ID 일치");
+    });
+%}
+
+###
+
+### 2-3. Product 수정
+PUT {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "Pro Plan v2",
+  "description": "프로 플랜 v2 — 업그레이드",
+  "condition": null,
+  "attributes": {
+    "tier": 2,
+    "recommended": true,
+    "version": 2
+  },
+  "metadata": {},
+  "tags": ["premium", "popular", "v2"]
+}
+
+> {%
+    client.test("Product 수정 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.name === "Pro Plan v2", "이름 변경됨");
+    });
+%}
+
+###
+
+### 2-4. 두 번째 Product 생성 (Starter Plan — ONE_TIME)
+POST {{baseUrl}}/product-groups/{{productGroupId}}/products
+Content-Type: application/json
+
+{
+  "name": "Starter Pack",
+  "description": "스타터 팩 — 일회성 구매",
+  "type": "ADD_ON",
+  "billingType": "ONE_TIME",
+  "condition": null,
+  "attributes": {
+    "tier": 1
+  },
+  "metadata": {},
+  "tags": ["starter"]
+}
+
+> {%
+    client.global.set("product2Id", response.body.productId);
+    client.test("두 번째 Product 생성 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+        client.assert(response.body.billingType === "ONE_TIME", "ONE_TIME");
+    });
+%}
+
+
+### ============================================
+### 3. Feature 관리
+### ============================================
+
+### 3-1. Feature 추가 — storage (quota 제한)
+POST {{baseUrl}}/products/{{productId}}/features
+Content-Type: application/json
+
+{
+  "featureCode": "storage",
+  "quota": 53687091200,
+  "attributes": {
+    "unit": "bytes",
+    "display": "50GB"
+  }
+}
+
+> {%
+    client.test("Feature(storage) 추가 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+    });
+%}
+
+###
+
+### 3-2. Feature 추가 — design-editor (quota 없음, 무제한)
+POST {{baseUrl}}/products/{{productId}}/features
+Content-Type: application/json
+
+{
+  "featureCode": "design-editor",
+  "quota": null,
+  "attributes": {
+    "type": "unlimited"
+  }
+}
+
+> {%
+    client.test("Feature(design-editor) 추가 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+    });
+%}
+
+###
+
+### 3-3. Feature 추가 — export-pdf
+POST {{baseUrl}}/products/{{productId}}/features
+Content-Type: application/json
+
+{
+  "featureCode": "export-pdf",
+  "quota": 100,
+  "attributes": {
+    "unit": "pages/month"
+  }
+}
+
+> {%
+    client.test("Feature(export-pdf) 추가 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+    });
+%}
+
+###
+
+### 3-4. Feature 목록 조회
+GET {{baseUrl}}/products/{{productId}}/features
+
+> {%
+    client.test("Feature 목록 조회 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.length === 3, "3개 Feature");
+    });
+%}
+
+###
+
+### 3-5. Feature 삭제 — export-pdf
+DELETE {{baseUrl}}/products/{{productId}}/features/export-pdf
+
+> {%
+    client.test("Feature 삭제 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+    });
+%}
+
+###
+
+### 3-6. Feature 삭제 후 목록 재확인
+GET {{baseUrl}}/products/{{productId}}/features
+
+> {%
+    client.test("Feature 삭제 후 2개 남음", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.length === 2, "2개 Feature");
+    });
+%}
+
+
+### ============================================
+### 4. Price 관리
+### ============================================
+
+### 4-1. 기본 가격 생성 (월간 $49)
+POST {{baseUrl}}/products/{{productId}}/prices
+Content-Type: application/json
+
+{
+  "currency": "USD",
+  "amount": 4900,
+  "billingInterval": "MONTH",
+  "intervalCount": 1,
+  "isDefault": true,
+  "condition": null,
+  "attributes": {},
+  "metadata": {},
+  "tags": []
+}
+
+> {%
+    client.global.set("priceId", response.body.priceId);
+    client.test("기본 Price 생성 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+        client.assert(response.body.amount === 4900, "금액 4900");
+        client.assert(response.body.isDefault === true, "기본 가격");
+    });
+%}
+
+###
+
+### 4-2. 연간 가격 생성 (연간 $490 — 할인)
+POST {{baseUrl}}/products/{{productId}}/prices
+Content-Type: application/json
+
+{
+  "currency": "USD",
+  "amount": 49000,
+  "billingInterval": "YEAR",
+  "intervalCount": 1,
+  "isDefault": false,
+  "condition": null,
+  "attributes": {
+    "discount_reason": "annual_discount",
+    "savings_percent": 17
+  },
+  "metadata": {},
+  "tags": ["annual"]
+}
+
+> {%
+    client.global.set("yearlyPriceId", response.body.priceId);
+    client.test("연간 Price 생성 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+        client.assert(response.body.amount === 49000, "금액 49000");
+    });
+%}
+
+###
+
+### 4-3. 조건부 가격 생성 (엔터프라이즈 할인)
+POST {{baseUrl}}/products/{{productId}}/prices
+Content-Type: application/json
+
+{
+  "currency": "USD",
+  "amount": 3900,
+  "billingInterval": "MONTH",
+  "intervalCount": 1,
+  "isDefault": false,
+  "condition": {
+    "field": "customer_tags",
+    "op": "CONTAINS",
+    "value": "enterprise"
+  },
+  "attributes": {
+    "priority": 1,
+    "discount_reason": "enterprise_discount"
+  },
+  "metadata": {},
+  "tags": ["enterprise"]
+}
+
+> {%
+    client.global.set("condPriceId", response.body.priceId);
+    client.test("조건부 Price 생성 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+        client.assert(response.body.amount === 3900, "금액 3900");
+        client.assert(response.body.isDefault === false, "기본 아님");
+    });
+%}
+
+###
+
+### 4-4. Price 삭제
+DELETE {{baseUrl}}/prices/{{condPriceId}}
+
+> {%
+    client.test("Price 삭제 성공", function() {
+        client.assert(response.status === 204, "Status 204");
+    });
+%}
+
+
+### ============================================
+### 5. 전체 조회 (ProductGroup + Product + Price)
+### ============================================
+
+### 5-1. ProductGroup 상세 조회 (하위 Product + Price 포함)
+GET {{baseUrl}}/product-groups/{{productGroupId}}
+
+> {%
+    client.test("ProductGroup 전체 트리 조회", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.products.length === 2, "Product 2개");
+    });
+%}
+
+###
+
+### 5-2. Product 상세 조회 (Price 포함)
+GET {{baseUrl}}/products/{{productId}}
+
+> {%
+    client.test("Product 상세 + Price 조회", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.prices.length === 2, "Price 2개 (1개 삭제됨)");
+        client.assert(response.body.features.length === 2, "Feature 2개");
+    });
+%}
+
+
+### ============================================
+### 6. 아카이브 + 삭제 시나리오
+### ============================================
+
+### 6-1. ProductGroup 아카이브
+POST {{baseUrl}}/product-groups/{{productGroupId}}/archive
+Content-Type: application/json
+
+> {%
+    client.test("ProductGroup 아카이브 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.status === "ARCHIVED", "Status는 ARCHIVED");
+    });
+%}
+
+###
+
+### 6-2. ACTIVE가 아닌 ProductGroup 삭제 시도 (실패 예상 — DRAFT만 삭제 가능)
+DELETE {{baseUrl}}/product-groups/{{productGroupId}}
+
+> {%
+    client.test("ARCHIVED ProductGroup 삭제 실패", function() {
+        client.assert(response.status === 409, "Status 409 Conflict");
+    });
+%}
+
+
+### ============================================
+### 7. 에러 케이스
+### ============================================
+
+### 7-1. 존재하지 않는 ProductGroup으로 Product 생성 시도
+POST {{baseUrl}}/product-groups/00000000-0000-0000-0000-000000000000/products
+Content-Type: application/json
+
+{
+  "name": "Ghost Product",
+  "description": "존재하지 않는 그룹",
+  "type": "PLAN",
+  "billingType": "RECURRING",
+  "condition": null,
+  "attributes": {},
+  "metadata": {},
+  "tags": []
+}
+
+> {%
+    client.test("존재하지 않는 ProductGroup → 400", function() {
+        client.assert(response.status === 400, "Status 400");
+    });
+%}
+
+###
+
+### 7-2. 존재하지 않는 Product 조회
+GET {{baseUrl}}/products/00000000-0000-0000-0000-000000000000
+
+> {%
+    client.test("존재하지 않는 Product → 404", function() {
+        client.assert(response.status === 404, "Status 404");
+    });
+%}
+
+###
+
+### 7-3. 잘못된 billingType
+POST {{baseUrl}}/product-groups/{{productGroupId}}/products
+Content-Type: application/json
+
+{
+  "name": "Bad Product",
+  "description": "잘못된 billingType",
+  "type": "PLAN",
+  "billingType": "INVALID",
+  "condition": null,
+  "attributes": {},
+  "metadata": {},
+  "tags": []
+}
+
+> {%
+    client.test("잘못된 billingType → 400", function() {
+        client.assert(response.status === 400, "Status 400");
+    });
+%}
+
+
+### ============================================
+### 8. 정리 (선택적)
+### ============================================
+
+### 8-1. Product 삭제
+# DELETE {{baseUrl}}/products/{{productId}}
+
+### 8-2. 두 번째 Product 삭제
+# DELETE {{baseUrl}}/products/{{product2Id}}
+
+### 8-3. ProductGroup 삭제 (DRAFT 상태일 때만 가능)
+# DELETE {{baseUrl}}/product-groups/{{productGroupId}}

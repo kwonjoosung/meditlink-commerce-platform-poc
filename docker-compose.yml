@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: meditlink_commerce
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d
@@ -26,13 +26,12 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
+      # 컨테이너 간 통신은 내부 5432, 호스트 매핑만 5433
       DB_NAME: meditlink_commerce
       DB_SCHEMA: core
       DB_USER: postgres
       DB_PASSWORD: postgres
-      # 로컬 compose 학습 환경에서는 테이블 자동 생성 허용
-      # (컨테이너 기동 실패 방지용)
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_LIQUIBASE_ENABLED: "false"
       SERVER_PORT: 8081
       GRPC_SERVER_PORT: 9090
     ports:
@@ -54,9 +53,7 @@ services:
       DB_SCHEMA: client
       DB_USER: postgres
       DB_PASSWORD: postgres
-      # 로컬 compose 학습 환경에서는 테이블 자동 생성 허용
-      # (컨테이너 기동 실패 방지용)
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_LIQUIBASE_ENABLED: "false"
       SERVER_PORT: 8080
       CORE_GRPC_HOST: core
       CORE_GRPC_PORT: 9090
