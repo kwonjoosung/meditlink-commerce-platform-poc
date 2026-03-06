@@ -16,24 +16,33 @@ dependencies {
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
 
-    // Hexagonal에서 persistence adapter를 구현하기 위한 JPA
+    // JPA (persistence 레이어)
     implementation(libs.spring.boot.starter.data.jpa)
 
-    // 학습 포인트: Spring Modulith
-    // - 모듈 경계 문서화 + 구조 검증 테스트를 위해 사용
+    // JSONB 매핑 (Hypersistence Utils)
+    implementation(libs.hypersistence.utils)
+
+    // Jackson (Rule Engine JSON 역직렬화)
+    implementation(libs.jackson.databind)
+
+    // Spring Modulith (모듈 경계 검증)
     implementation(libs.spring.modulith.starter.core)
 
-    // core는 gRPC server endpoint를 직접 제공
+    // Stripe 동기화
+    implementation(libs.stripe.java)
+
+    // gRPC server (기존 유지)
     implementation(libs.grpc.netty.shaded)
     implementation(libs.grpc.protobuf)
     implementation(libs.grpc.stub)
 
-    // 스키마 버전 관리 (DDL)
+    // 스키마 버전 관리 (Liquibase)
     implementation(libs.liquibase.core)
     runtimeOnly(libs.postgresql)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.modulith.starter.test)
+    testImplementation(libs.archunit.junit5)
 }
 
 jib {

@@ -1,0 +1,357 @@
+databaseChangeLog:
+
+  # ── ProductGroup (설계 문서의 Catalog Aggregate) ──
+  - changeSet:
+      id: 0001-01-create-product-groups
+      author: commerce-poc
+      changes:
+        - createTable:
+            tableName: product_groups
+            columns:
+              - column:
+                  name: product_group_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: slug
+                  type: TEXT
+                  constraints:
+                    unique: true
+              - column:
+                  name: name
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: status
+                  type: TEXT
+                  defaultValue: DRAFT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_order
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: condition
+                  type: JSONB
+              - column:
+                  name: attributes
+                  type: JSONB
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: metadata
+                  type: JSONB
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tags
+                  type: TEXT[]
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+  # ── Product Aggregate ──
+  - changeSet:
+      id: 0001-02-create-products
+      author: commerce-poc
+      changes:
+        - createTable:
+            tableName: products
+            columns:
+              - column:
+                  name: product_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: product_group_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: external_id
+                  type: TEXT
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: name
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: type
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: billing_type
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: TEXT
+                  defaultValue: ACTIVE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_order
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: condition
+                  type: JSONB
+              - column:
+                  name: attributes
+                  type: JSONB
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: metadata
+                  type: JSONB
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tags
+                  type: TEXT[]
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: products
+            baseColumnNames: product_group_id
+            referencedTableName: product_groups
+            referencedColumnNames: product_group_id
+            constraintName: fk_products_product_group
+
+  # ── ProductFeature (Product 내부 Entity) ──
+  - changeSet:
+      id: 0001-03-create-product-features
+      author: commerce-poc
+      changes:
+        - createTable:
+            tableName: product_features
+            columns:
+              - column:
+                  name: product_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: feature_code
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quota
+                  type: BIGINT
+              - column:
+                  name: attributes
+                  type: JSONB
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: product_features
+            columnNames: product_id, feature_code
+            constraintName: pk_product_features
+        - addForeignKeyConstraint:
+            baseTableName: product_features
+            baseColumnNames: product_id
+            referencedTableName: products
+            referencedColumnNames: product_id
+            constraintName: fk_product_features_product
+            onDelete: CASCADE
+
+  # ── Price Aggregate ──
+  - changeSet:
+      id: 0001-04-create-prices
+      author: commerce-poc
+      changes:
+        - createTable:
+            tableName: prices
+            columns:
+              - column:
+                  name: price_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: product_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: external_id
+                  type: TEXT
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: currency
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: billing_interval
+                  type: TEXT
+              - column:
+                  name: interval_count
+                  type: INT
+                  defaultValueNumeric: 1
+              - column:
+                  name: is_default
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: condition
+                  type: JSONB
+              - column:
+                  name: attributes
+                  type: JSONB
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: metadata
+                  type: JSONB
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tags
+                  type: TEXT[]
+                  defaultValue: '{}'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: prices
+            baseColumnNames: product_id
+            referencedTableName: products
+            referencedColumnNames: product_id
+            constraintName: fk_prices_product
+            onDelete: CASCADE
+
+  # ── 인덱스 ──
+  - changeSet:
+      id: 0001-05-create-indexes
+      author: commerce-poc
+      changes:
+        # 통화별 default 가격은 하나만 (partial unique index)
+        - sql:
+            sql: CREATE UNIQUE INDEX idx_prices_default ON prices(product_id, currency) WHERE is_default = true;
+
+        # 조회 인덱스
+        - createIndex:
+            tableName: products
+            indexName: idx_products_product_group
+            columns:
+              - column:
+                  name: product_group_id
+        - createIndex:
+            tableName: products
+            indexName: idx_products_status
+            columns:
+              - column:
+                  name: product_group_id
+              - column:
+                  name: status
+        - createIndex:
+            tableName: product_features
+            indexName: idx_product_features_product
+            columns:
+              - column:
+                  name: product_id
+        - createIndex:
+            tableName: product_features
+            indexName: idx_product_features_feature
+            columns:
+              - column:
+                  name: feature_code
+        - createIndex:
+            tableName: prices
+            indexName: idx_prices_product
+            columns:
+              - column:
+                  name: product_id
+
+        # Tags GIN 인덱스
+        - sql:
+            sql: CREATE INDEX idx_product_groups_tags ON product_groups USING GIN (tags);
+        - sql:
+            sql: CREATE INDEX idx_products_tags ON products USING GIN (tags);
+        - sql:
+            sql: CREATE INDEX idx_prices_tags ON prices USING GIN (tags);
+
+        # Attributes GIN 인덱스
+        - sql:
+            sql: CREATE INDEX idx_products_attributes ON products USING GIN (attributes);
+        - sql:
+            sql: CREATE INDEX idx_prices_attributes ON prices USING GIN (attributes);
