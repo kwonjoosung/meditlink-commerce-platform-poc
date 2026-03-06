@@ -207,7 +207,7 @@ com.meditlink.poc.commerce.core/
 
 ---
 
-## Step 5: Product BC — Application Service ⬜
+## Step 5: Product BC — Application Service ✅
 
 **작업:**
 1. Command DTO 6개
