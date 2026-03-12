@@ -1,10 +1,8 @@
 package com.meditlink.poc.commerce.core.coupon.application.port.in;
 
-import java.time.Instant;
-
-public record IssueCouponCommand(
-        String code,
-        int discountRate,
-        Instant expiresAt
-) {
+/**
+ * @deprecated IssueCouponFromPolicyCommand로 대체됨.
+ */
+@Deprecated(forRemoval = true)
+public record IssueCouponCommand() {
 }

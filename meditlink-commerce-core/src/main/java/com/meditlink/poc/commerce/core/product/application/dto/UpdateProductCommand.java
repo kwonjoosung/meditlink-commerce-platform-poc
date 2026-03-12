@@ -1,13 +1,16 @@
 package com.meditlink.poc.commerce.core.product.application.dto;
 
-import java.util.List;
+import com.meditlink.poc.commerce.core.product.domain.product.Visibility;
+
 import java.util.Map;
 
 public record UpdateProductCommand(
         String name,
+        String displayName,
         String description,
-        Object condition,
-        Map<String, Object> attributes,
-        Map<String, Object> metadata,
-        List<String> tags
+        int tierOrder,
+        Visibility visibility,
+        Map<String, Object> displayConfig,
+        Map<String, Object> visibilityRules,
+        Map<String, Object> compatibility
 ) {}

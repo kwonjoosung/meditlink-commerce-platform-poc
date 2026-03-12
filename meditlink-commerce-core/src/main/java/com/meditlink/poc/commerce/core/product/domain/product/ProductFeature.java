@@ -2,7 +2,6 @@ package com.meditlink.poc.commerce.core.product.domain.product;
 
 import com.meditlink.poc.commerce.core.shared.domain.ProductId;
 
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -15,9 +14,12 @@ public class ProductFeature {
     private final ProductId productId;
     private final String featureCode;
     private Long quota;
-    private Map<String, Object> attributes;
+    private String displayLabel;
+    private boolean isHighlighted;
+    private String stripeEntitlementId;
 
-    public ProductFeature(ProductId productId, String featureCode, Long quota, Map<String, Object> attributes) {
+    public ProductFeature(ProductId productId, String featureCode, Long quota,
+                          String displayLabel, boolean isHighlighted, String stripeEntitlementId) {
         Objects.requireNonNull(productId, "productId는 null일 수 없습니다");
         if (featureCode == null || featureCode.isBlank()) {
             throw new IllegalArgumentException("featureCode는 비어 있을 수 없습니다");
@@ -25,19 +27,27 @@ public class ProductFeature {
         this.productId = productId;
         this.featureCode = featureCode;
         this.quota = quota;
-        this.attributes = attributes != null ? attributes : Map.of();
+        this.displayLabel = displayLabel;
+        this.isHighlighted = isHighlighted;
+        this.stripeEntitlementId = stripeEntitlementId;
     }
 
     public ProductId getProductId() { return productId; }
     public String getFeatureCode() { return featureCode; }
     public Long getQuota() { return quota; }
-    public Map<String, Object> getAttributes() { return attributes; }
+    public String getDisplayLabel() { return displayLabel; }
+    public boolean isHighlighted() { return isHighlighted; }
+    public String getStripeEntitlementId() { return stripeEntitlementId; }
 
     void updateQuota(Long quota) {
         this.quota = quota;
     }
 
-    void updateAttributes(Map<String, Object> attributes) {
-        this.attributes = attributes != null ? attributes : Map.of();
+    void updateDisplayLabel(String displayLabel) {
+        this.displayLabel = displayLabel;
+    }
+
+    void updateHighlighted(boolean isHighlighted) {
+        this.isHighlighted = isHighlighted;
     }
 }

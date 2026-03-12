@@ -19,7 +19,18 @@
 1. `core` 스키마
 2. `client` 스키마
 
-초기 스키마 생성 SQL: [01-init-schemas.sql](/Users/medit/IdeaProjects/codex/commerce_test/docker/postgres/init/01-init-schemas.sql)
+로컬(docker compose) 전략:
+- PostgreSQL init SQL로 최종 스키마/더미 데이터를 1회 로드
+- app은 `ddl-auto=validate` 유지 + compose env에서 `SPRING_LIQUIBASE_ENABLED=false`
+
+배포/운영 전략:
+- Liquibase changeSet 기반 스키마 관리 유지
+
+로컬 init SQL:
+- [01-init-schemas.sql](/Users/medit/IdeaProjects/codex/commerce_test/docker/postgres/init/01-init-schemas.sql)
+- [02-core-final-schema.sql](/Users/medit/IdeaProjects/codex/commerce_test/docker/postgres/init/02-core-final-schema.sql)
+- [03-client-final-schema.sql](/Users/medit/IdeaProjects/codex/commerce_test/docker/postgres/init/03-client-final-schema.sql)
+- [04-core-dummy-data.sql](/Users/medit/IdeaProjects/codex/commerce_test/docker/postgres/init/04-core-dummy-data.sql)
 
 ## 3. Jib Dockerizing (Apple Silicon + Linux 배포 대응)
 
@@ -62,6 +73,10 @@
 ./scripts/compose-down.sh --volumes
 ```
 
+주의:
+- init SQL은 DB 볼륨 첫 생성 시점에만 실행된다.
+- 로컬 스키마/더미를 다시 반영하려면 `./scripts/compose-down.sh --volumes` 후 `./scripts/compose-up.sh`를 실행한다.
+
 ## 5. 샘플 호출 시나리오 (client 기준)
 
 1. 상품 생성
@@ -96,15 +111,4 @@ curl http://localhost:8080/api/bff/product-groups
 6. Product Plan 목록
 ```bash
 curl http://localhost:8080/api/bff/products/{productId}/plans
-```
-
-## 6. 다음 에이전트 시작 가이드
-
-- 인수인계 문서: [NEXT_AGENT_HANDOFF.md](/Users/medit/IdeaProjects/codex/commerce_test/NEXT_AGENT_HANDOFF.md)
-- 세션 메모리: [MEMORY_BANK.md](/Users/medit/IdeaProjects/codex/commerce_test/MEMORY_BANK.md)
-- 부트스트랩 스크립트: [next-agent-bootstrap.sh](/Users/medit/IdeaProjects/codex/commerce_test/scripts/next-agent-bootstrap.sh)
-
-시작 권장:
-```bash
-./scripts/next-agent-bootstrap.sh
 ```

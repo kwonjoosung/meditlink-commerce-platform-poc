@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.Type;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,23 +25,22 @@ public class ProductGroupEntity {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "type", nullable = false)
+    private String type;
+
     @Column(name = "status", nullable = false)
     private String status;
 
-    @Column(name = "display_order", nullable = false)
-    private int displayOrder;
+    @Column(name = "sort_order", nullable = false)
+    private int sortOrder;
 
     @Type(JsonType.class)
-    @Column(name = "condition", columnDefinition = "jsonb")
-    private Map<String, Object> condition;
+    @Column(name = "display_config", nullable = false, columnDefinition = "jsonb")
+    private Map<String, Object> displayConfig;
 
     @Type(JsonType.class)
-    @Column(name = "attributes", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> attributes;
-
-    @Type(JsonType.class)
-    @Column(name = "metadata", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> metadata;
+    @Column(name = "visibility_rules", nullable = false, columnDefinition = "jsonb")
+    private Map<String, Object> visibilityRules;
 
     @Column(name = "tags", columnDefinition = "text[]")
     private String[] tags;
@@ -55,41 +53,28 @@ public class ProductGroupEntity {
 
     public ProductGroupEntity() {}
 
-    // ── Getters / Setters ──
-
     public UUID getProductGroupId() { return productGroupId; }
     public void setProductGroupId(UUID productGroupId) { this.productGroupId = productGroupId; }
-
     public String getSlug() { return slug; }
     public void setSlug(String slug) { this.slug = slug; }
-
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-
-    public int getDisplayOrder() { return displayOrder; }
-    public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
-
-    public Map<String, Object> getCondition() { return condition; }
-    public void setCondition(Map<String, Object> condition) { this.condition = condition; }
-
-    public Map<String, Object> getAttributes() { return attributes; }
-    public void setAttributes(Map<String, Object> attributes) { this.attributes = attributes; }
-
-    public Map<String, Object> getMetadata() { return metadata; }
-    public void setMetadata(Map<String, Object> metadata) { this.metadata = metadata; }
-
+    public int getSortOrder() { return sortOrder; }
+    public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
+    public Map<String, Object> getDisplayConfig() { return displayConfig; }
+    public void setDisplayConfig(Map<String, Object> displayConfig) { this.displayConfig = displayConfig; }
+    public Map<String, Object> getVisibilityRules() { return visibilityRules; }
+    public void setVisibilityRules(Map<String, Object> visibilityRules) { this.visibilityRules = visibilityRules; }
     public String[] getTags() { return tags; }
     public void setTags(String[] tags) { this.tags = tags; }
-
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

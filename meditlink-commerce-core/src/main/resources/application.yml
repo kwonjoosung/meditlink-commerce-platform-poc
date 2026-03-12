@@ -22,6 +22,20 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     default-schema: ${DB_SCHEMA:core}
 
+  # Kafka Producer 설정
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+
+# Kafka 토픽 이름
+kafka:
+  topic:
+    product-created: commerce.product.created
+    product-updated: commerce.product.updated
+    price-changed: commerce.price.changed
+
 server:
   port: ${SERVER_PORT:8081}
 

@@ -1,8 +1,6 @@
 package com.meditlink.poc.commerce.core.product.domain.productgroup;
 
 import com.meditlink.poc.commerce.core.shared.domain.ProductGroupId;
-import com.meditlink.poc.commerce.core.shared.infra.rule.Rule;
-import com.meditlink.poc.commerce.core.shared.infra.rule.RuleValidator;
 
 import java.time.Instant;
 import java.util.List;
@@ -11,7 +9,8 @@ import java.util.Objects;
 
 /**
  * ProductGroup Aggregate Root.
- * 설계 문서의 Catalog에 해당한다.
+ * 상품 간의 구조적 관계를 정의하는 그룹.
+ * type 필드로 용도를 구분한다 (plan_family, add_on_family, bundle).
  */
 public class ProductGroup {
 
@@ -19,55 +18,54 @@ public class ProductGroup {
     private String slug;
     private String name;
     private String description;
+    private ProductGroupType type;
     private ProductGroupStatus status;
-    private int displayOrder;
-    private Rule condition;
-    private Map<String, Object> attributes;
-    private Map<String, Object> metadata;
+    private int sortOrder;
+    private Map<String, Object> displayConfig;
+    private Map<String, Object> visibilityRules;
     private List<String> tags;
     private Instant createdAt;
     private Instant updatedAt;
 
     private ProductGroup() {}
 
-    public static ProductGroup create(String name, String slug, String description) {
+    public static ProductGroup create(String name, String slug, String description, ProductGroupType type) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("name은 비어 있을 수 없습니다");
         }
+        Objects.requireNonNull(type, "type은 null일 수 없습니다");
+
         var pg = new ProductGroup();
         pg.productGroupId = ProductGroupId.generate();
         pg.slug = slug;
         pg.name = name;
         pg.description = description;
+        pg.type = type;
         pg.status = ProductGroupStatus.DRAFT;
-        pg.displayOrder = 0;
-        pg.condition = null;
-        pg.attributes = Map.of();
-        pg.metadata = Map.of();
+        pg.sortOrder = 0;
+        pg.displayConfig = Map.of();
+        pg.visibilityRules = Map.of();
         pg.tags = List.of();
         pg.createdAt = Instant.now();
         pg.updatedAt = Instant.now();
         return pg;
     }
 
-    /**
-     * 영속성 계층에서 복원할 때 사용하는 팩토리.
-     */
     public static ProductGroup reconstitute(
             ProductGroupId productGroupId, String slug, String name, String description,
-            ProductGroupStatus status, int displayOrder, Rule condition,
-            Map<String, Object> attributes, Map<String, Object> metadata,
+            ProductGroupType type, ProductGroupStatus status, int sortOrder,
+            Map<String, Object> displayConfig, Map<String, Object> visibilityRules,
             List<String> tags, Instant createdAt, Instant updatedAt) {
         var pg = new ProductGroup();
         pg.productGroupId = productGroupId;
         pg.slug = slug;
         pg.name = name;
         pg.description = description;
+        pg.type = type;
         pg.status = status;
-        pg.displayOrder = displayOrder;
-        pg.condition = condition;
-        pg.attributes = attributes != null ? attributes : Map.of();
-        pg.metadata = metadata != null ? metadata : Map.of();
+        pg.sortOrder = sortOrder;
+        pg.displayConfig = displayConfig != null ? displayConfig : Map.of();
+        pg.visibilityRules = visibilityRules != null ? visibilityRules : Map.of();
         pg.tags = tags != null ? tags : List.of();
         pg.createdAt = createdAt;
         pg.updatedAt = updatedAt;
@@ -77,13 +75,11 @@ public class ProductGroup {
     // ── 도메인 메서드 ──
 
     public void activate() {
-        // TODO: 정책 - 하위 상품이 하나 이상 있어야 활성화 가능? (PoC에서는 느슨하게)
         this.status = ProductGroupStatus.ACTIVE;
         this.updatedAt = Instant.now();
     }
 
     public void archive() {
-        // TODO: 정책 - 하위 상품 처리 정책 확정 필요
         this.status = ProductGroupStatus.ARCHIVED;
         this.updatedAt = Instant.now();
     }
@@ -106,29 +102,18 @@ public class ProductGroup {
         this.updatedAt = Instant.now();
     }
 
-    public void updateCondition(Rule condition) {
-        if (condition != null) {
-            var result = RuleValidator.validate(condition);
-            if (!result.valid()) {
-                throw new IllegalArgumentException("유효하지 않은 조건: " + result.errors());
-            }
-        }
-        this.condition = condition;
+    public void updateSortOrder(int sortOrder) {
+        this.sortOrder = sortOrder;
         this.updatedAt = Instant.now();
     }
 
-    public void updateDisplayOrder(int displayOrder) {
-        this.displayOrder = displayOrder;
+    public void updateDisplayConfig(Map<String, Object> displayConfig) {
+        this.displayConfig = displayConfig != null ? displayConfig : Map.of();
         this.updatedAt = Instant.now();
     }
 
-    public void updateAttributes(Map<String, Object> attributes) {
-        this.attributes = attributes != null ? attributes : Map.of();
-        this.updatedAt = Instant.now();
-    }
-
-    public void updateMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata != null ? metadata : Map.of();
+    public void updateVisibilityRules(Map<String, Object> visibilityRules) {
+        this.visibilityRules = visibilityRules != null ? visibilityRules : Map.of();
         this.updatedAt = Instant.now();
     }
 
@@ -146,11 +131,11 @@ public class ProductGroup {
     public String getSlug() { return slug; }
     public String getName() { return name; }
     public String getDescription() { return description; }
+    public ProductGroupType getType() { return type; }
     public ProductGroupStatus getStatus() { return status; }
-    public int getDisplayOrder() { return displayOrder; }
-    public Rule getCondition() { return condition; }
-    public Map<String, Object> getAttributes() { return attributes; }
-    public Map<String, Object> getMetadata() { return metadata; }
+    public int getSortOrder() { return sortOrder; }
+    public Map<String, Object> getDisplayConfig() { return displayConfig; }
+    public Map<String, Object> getVisibilityRules() { return visibilityRules; }
     public List<String> getTags() { return tags; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

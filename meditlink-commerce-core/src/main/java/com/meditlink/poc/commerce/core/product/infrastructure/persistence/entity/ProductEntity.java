@@ -18,7 +18,7 @@ public class ProductEntity {
     @Column(name = "product_id")
     private UUID productId;
 
-    @Column(name = "product_group_id", nullable = false)
+    @Column(name = "product_group_id")
     private UUID productGroupId;
 
     @Column(name = "external_id", nullable = false, unique = true)
@@ -27,32 +27,35 @@ public class ProductEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "display_name")
+    private String displayName;
+
     @Column(name = "description")
     private String description;
 
-    @Column(name = "type", nullable = false)
-    private String type;
-
-    @Column(name = "billing_type", nullable = false)
-    private String billingType;
+    @Column(name = "item_type", nullable = false)
+    private String itemType;
 
     @Column(name = "status", nullable = false)
     private String status;
 
-    @Column(name = "display_order", nullable = false)
-    private int displayOrder;
+    @Column(name = "tier_order", nullable = false)
+    private int tierOrder;
+
+    @Column(name = "visibility", nullable = false)
+    private String visibility;
 
     @Type(JsonType.class)
-    @Column(name = "condition", columnDefinition = "jsonb")
-    private Map<String, Object> condition;
+    @Column(name = "display_config", nullable = false, columnDefinition = "jsonb")
+    private Map<String, Object> displayConfig;
 
     @Type(JsonType.class)
-    @Column(name = "attributes", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> attributes;
+    @Column(name = "visibility_rules", nullable = false, columnDefinition = "jsonb")
+    private Map<String, Object> visibilityRules;
 
     @Type(JsonType.class)
-    @Column(name = "metadata", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> metadata;
+    @Column(name = "compatibility", nullable = false, columnDefinition = "jsonb")
+    private Map<String, Object> compatibility;
 
     @Column(name = "tags", columnDefinition = "text[]")
     private String[] tags;
@@ -68,53 +71,38 @@ public class ProductEntity {
 
     public ProductEntity() {}
 
-    // ── Getters / Setters ──
-
     public UUID getProductId() { return productId; }
     public void setProductId(UUID productId) { this.productId = productId; }
-
     public UUID getProductGroupId() { return productGroupId; }
     public void setProductGroupId(UUID productGroupId) { this.productGroupId = productGroupId; }
-
     public String getExternalId() { return externalId; }
     public void setExternalId(String externalId) { this.externalId = externalId; }
-
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-
+    public String getDisplayName() { return displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-
-    public String getBillingType() { return billingType; }
-    public void setBillingType(String billingType) { this.billingType = billingType; }
-
+    public String getItemType() { return itemType; }
+    public void setItemType(String itemType) { this.itemType = itemType; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-
-    public int getDisplayOrder() { return displayOrder; }
-    public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
-
-    public Map<String, Object> getCondition() { return condition; }
-    public void setCondition(Map<String, Object> condition) { this.condition = condition; }
-
-    public Map<String, Object> getAttributes() { return attributes; }
-    public void setAttributes(Map<String, Object> attributes) { this.attributes = attributes; }
-
-    public Map<String, Object> getMetadata() { return metadata; }
-    public void setMetadata(Map<String, Object> metadata) { this.metadata = metadata; }
-
+    public int getTierOrder() { return tierOrder; }
+    public void setTierOrder(int tierOrder) { this.tierOrder = tierOrder; }
+    public String getVisibility() { return visibility; }
+    public void setVisibility(String visibility) { this.visibility = visibility; }
+    public Map<String, Object> getDisplayConfig() { return displayConfig; }
+    public void setDisplayConfig(Map<String, Object> displayConfig) { this.displayConfig = displayConfig; }
+    public Map<String, Object> getVisibilityRules() { return visibilityRules; }
+    public void setVisibilityRules(Map<String, Object> visibilityRules) { this.visibilityRules = visibilityRules; }
+    public Map<String, Object> getCompatibility() { return compatibility; }
+    public void setCompatibility(Map<String, Object> compatibility) { this.compatibility = compatibility; }
     public String[] getTags() { return tags; }
     public void setTags(String[] tags) { this.tags = tags; }
-
     public List<ProductFeatureEntity> getFeatures() { return features; }
     public void setFeatures(List<ProductFeatureEntity> features) { this.features = features; }
-
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

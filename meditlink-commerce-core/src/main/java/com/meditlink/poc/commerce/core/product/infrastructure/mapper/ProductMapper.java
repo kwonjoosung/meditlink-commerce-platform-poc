@@ -1,17 +1,13 @@
 package com.meditlink.poc.commerce.core.product.infrastructure.mapper;
 
-import com.meditlink.poc.commerce.core.product.domain.product.Product;
-import com.meditlink.poc.commerce.core.product.domain.product.ProductFeature;
-import com.meditlink.poc.commerce.core.product.domain.product.ProductStatus;
+import com.meditlink.poc.commerce.core.product.domain.product.*;
 import com.meditlink.poc.commerce.core.product.infrastructure.persistence.entity.ProductEntity;
 import com.meditlink.poc.commerce.core.product.infrastructure.persistence.entity.ProductFeatureEntity;
 import com.meditlink.poc.commerce.core.shared.domain.ProductGroupId;
 import com.meditlink.poc.commerce.core.shared.domain.ProductId;
-import com.meditlink.poc.commerce.core.shared.infra.rule.RuleDeserializer;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public final class ProductMapper {
 
@@ -23,23 +19,26 @@ public final class ProductMapper {
                         ProductId.of(fe.getProductId()),
                         fe.getFeatureCode(),
                         fe.getQuota(),
-                        fe.getAttributes()
+                        fe.getDisplayLabel(),
+                        fe.isHighlighted(),
+                        fe.getStripeEntitlementId()
                 ))
                 .toList();
 
         return Product.reconstitute(
                 ProductId.of(entity.getProductId()),
-                ProductGroupId.of(entity.getProductGroupId()),
+                entity.getProductGroupId() != null ? ProductGroupId.of(entity.getProductGroupId()) : null,
                 entity.getExternalId(),
                 entity.getName(),
+                entity.getDisplayName(),
                 entity.getDescription(),
-                entity.getType(),
-                entity.getBillingType(),
+                ItemType.valueOf(entity.getItemType()),
                 ProductStatus.valueOf(entity.getStatus()),
-                entity.getDisplayOrder(),
-                entity.getCondition() != null ? RuleDeserializer.deserialize(entity.getCondition()) : null,
-                entity.getAttributes(),
-                entity.getMetadata(),
+                entity.getTierOrder(),
+                Visibility.valueOf(entity.getVisibility()),
+                entity.getDisplayConfig(),
+                entity.getVisibilityRules(),
+                entity.getCompatibility(),
                 entity.getTags() != null ? Arrays.asList(entity.getTags()) : List.of(),
                 features,
                 entity.getCreatedAt(),
@@ -50,17 +49,18 @@ public final class ProductMapper {
     public static ProductEntity toEntity(Product domain) {
         var entity = new ProductEntity();
         entity.setProductId(domain.getProductId().value());
-        entity.setProductGroupId(domain.getProductGroupId().value());
+        entity.setProductGroupId(domain.getProductGroupId() != null ? domain.getProductGroupId().value() : null);
         entity.setExternalId(domain.getExternalId());
         entity.setName(domain.getName());
+        entity.setDisplayName(domain.getDisplayName());
         entity.setDescription(domain.getDescription());
-        entity.setType(domain.getType());
-        entity.setBillingType(domain.getBillingType());
+        entity.setItemType(domain.getItemType().name());
         entity.setStatus(domain.getStatus().name());
-        entity.setDisplayOrder(domain.getDisplayOrder());
-        entity.setCondition(domain.getCondition() != null ? RuleDeserializer.serialize(domain.getCondition()) : null);
-        entity.setAttributes(domain.getAttributes());
-        entity.setMetadata(domain.getMetadata());
+        entity.setTierOrder(domain.getTierOrder());
+        entity.setVisibility(domain.getVisibility().name());
+        entity.setDisplayConfig(domain.getDisplayConfig());
+        entity.setVisibilityRules(domain.getVisibilityRules());
+        entity.setCompatibility(domain.getCompatibility());
         entity.setTags(domain.getTags().toArray(new String[0]));
         entity.setCreatedAt(domain.getCreatedAt());
         entity.setUpdatedAt(domain.getUpdatedAt());
@@ -74,7 +74,9 @@ public final class ProductMapper {
                     fe.setProductId(domain.getProductId().value());
                     fe.setFeatureCode(f.getFeatureCode());
                     fe.setQuota(f.getQuota());
-                    fe.setAttributes(f.getAttributes());
+                    fe.setDisplayLabel(f.getDisplayLabel());
+                    fe.setHighlighted(f.isHighlighted());
+                    fe.setStripeEntitlementId(f.getStripeEntitlementId());
                     return fe;
                 })
                 .toList();

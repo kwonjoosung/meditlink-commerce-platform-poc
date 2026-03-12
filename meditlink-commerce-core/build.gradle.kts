@@ -28,6 +28,9 @@ dependencies {
     // Spring Modulith (모듈 경계 검증)
     implementation(libs.spring.modulith.starter.core)
 
+    // Kafka (비동기 이벤트 발행)
+    implementation(libs.spring.kafka)
+
     // Stripe 동기화
     implementation(libs.stripe.java)
 

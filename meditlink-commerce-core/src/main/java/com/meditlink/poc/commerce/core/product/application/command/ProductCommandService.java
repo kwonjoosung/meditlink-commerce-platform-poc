@@ -7,9 +7,9 @@ import com.meditlink.poc.commerce.core.product.application.port.ProductGroupRepo
 import com.meditlink.poc.commerce.core.product.application.port.ProductRepository;
 import com.meditlink.poc.commerce.core.product.application.port.StripeProductSync;
 import com.meditlink.poc.commerce.core.product.domain.product.Product;
+import com.meditlink.poc.commerce.core.product.infrastructure.kafka.ProductEventPublisher;
 import com.meditlink.poc.commerce.core.shared.domain.ProductGroupId;
 import com.meditlink.poc.commerce.core.shared.domain.ProductId;
-import com.meditlink.poc.commerce.core.shared.infra.rule.RuleDeserializer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +20,16 @@ public class ProductCommandService {
     private final ProductRepository productRepository;
     private final ProductGroupRepository productGroupRepository;
     private final StripeProductSync stripeProductSync;
+    private final ProductEventPublisher eventPublisher;
 
     public ProductCommandService(ProductRepository productRepository,
                                  ProductGroupRepository productGroupRepository,
-                                 StripeProductSync stripeProductSync) {
+                                 StripeProductSync stripeProductSync,
+                                 ProductEventPublisher eventPublisher) {
         this.productRepository = productRepository;
         this.productGroupRepository = productGroupRepository;
         this.stripeProductSync = stripeProductSync;
+        this.eventPublisher = eventPublisher;
     }
 
     public Product create(CreateProductCommand cmd) {
@@ -37,42 +40,36 @@ public class ProductCommandService {
 
         var product = Product.create(
                 ProductGroupId.of(cmd.productGroupId()),
-                cmd.name(), cmd.description(), cmd.type(), cmd.billingType()
+                cmd.name(), cmd.displayName(), cmd.description(), cmd.itemType()
         );
-
-        if (cmd.condition() != null) {
-            product.updateCondition(RuleDeserializer.deserialize(cmd.condition()));
-        }
-        if (cmd.attributes() != null) product.updateAttributes(cmd.attributes());
-        if (cmd.metadata() != null) product.updateMetadata(cmd.metadata());
-        if (cmd.tags() != null) product.updateTags(cmd.tags());
 
         // Stripe 동기화 → externalId 할당
         String externalId = stripeProductSync.syncProduct(product);
         product.assignExternalId(externalId);
 
-        return productRepository.save(product);
+        var saved = productRepository.save(product);
+        eventPublisher.publishProductCreated(saved);
+        return saved;
     }
 
     public Product update(String id, UpdateProductCommand cmd) {
         var product = findOrThrow(id);
 
-        product.updateInfo(cmd.name(), cmd.description());
-        if (cmd.condition() != null) {
-            product.updateCondition(RuleDeserializer.deserialize(cmd.condition()));
-        } else {
-            product.updateCondition(null);
-        }
-        if (cmd.attributes() != null) product.updateAttributes(cmd.attributes());
-        if (cmd.metadata() != null) product.updateMetadata(cmd.metadata());
-        if (cmd.tags() != null) product.updateTags(cmd.tags());
+        product.updateInfo(cmd.name(), cmd.displayName(), cmd.description());
+        product.updateTierOrder(cmd.tierOrder());
+        product.updateVisibility(cmd.visibility());
+        product.updateDisplayConfig(cmd.displayConfig());
+        product.updateVisibilityRules(cmd.visibilityRules());
+        product.updateCompatibility(cmd.compatibility());
 
-        return productRepository.save(product);
+        var saved = productRepository.save(product);
+        eventPublisher.publishProductUpdated(saved);
+        return saved;
     }
 
     public Product addFeature(String productId, AddFeatureCommand cmd) {
         var product = findOrThrow(productId);
-        product.addFeature(cmd.featureCode(), cmd.quota(), cmd.attributes());
+        product.addFeature(cmd.featureCode(), cmd.quota(), cmd.displayLabel(), cmd.isHighlighted());
         return productRepository.save(product);
     }
 
@@ -85,7 +82,9 @@ public class ProductCommandService {
     public Product deactivate(String id) {
         var product = findOrThrow(id);
         product.deactivate();
-        return productRepository.save(product);
+        var saved = productRepository.save(product);
+        eventPublisher.publishProductUpdated(saved);
+        return saved;
     }
 
     public void delete(String id) {

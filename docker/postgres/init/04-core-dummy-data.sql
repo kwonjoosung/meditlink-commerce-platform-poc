@@ -1,67 +1,97 @@
 -- 로컬 학습/데모용 더미 데이터
--- init 스크립트는 볼륨 초기화 시점에 1회 실행된다.
--- PRODUCT-BC.md 예시 데이터 기반 (Catalog → ProductGroup 리네이밍 적용)
+-- NEW_SPEC 기반 Merchandising 도메인 리팩토링 반영
+-- Price = 정가만, 할인은 Coupon BC (PromotionPolicy)
 
--- ProductGroup (설계 문서의 Catalog)
-INSERT INTO core.product_groups (product_group_id, slug, name, status, attributes) VALUES
-('11111111-1111-1111-1111-111111111101', 'design-suite', 'Design Suite', 'ACTIVE',
- '{"product_group_type": "plan_tier", "display_style": "comparison_table"}')
+-- ============================================================
+-- Feature BC
+-- ============================================================
+
+INSERT INTO core.features (feature_id, feature_code, name, description, type, status) VALUES
+('a0000000-0000-0000-0000-000000000001', 'design-editor', 'Design Editor', '디자인 에디터 기본 기능', 'BOOLEAN', 'ACTIVE'),
+('a0000000-0000-0000-0000-000000000002', 'storage', 'Cloud Storage', '클라우드 저장 공간', 'QUOTA', 'ACTIVE'),
+('a0000000-0000-0000-0000-000000000003', 'export', 'Export', '파일 내보내기 기능', 'QUOTA', 'ACTIVE'),
+('a0000000-0000-0000-0000-000000000004', 'analytics-dashboard', 'Analytics Dashboard', '분석 대시보드', 'BOOLEAN', 'ACTIVE'),
+('a0000000-0000-0000-0000-000000000005', 'api-access', 'API Access', 'REST API 접근', 'BOOLEAN', 'ACTIVE')
+ON CONFLICT (feature_id) DO NOTHING;
+
+-- ============================================================
+-- ProductGroup
+-- ============================================================
+
+INSERT INTO core.product_groups (product_group_id, slug, name, description, type, status, sort_order, display_config, visibility_rules) VALUES
+('c0000000-0000-0000-0000-000000000001', 'design-suite', 'Design Suite', '디자인 도구 플랜 라인업', 'PLAN_FAMILY', 'ACTIVE', 1,
+ '{"display_style": "comparison_table"}', '{}'),
+('c0000000-0000-0000-0000-000000000002', 'storage-addons', 'Storage Add-ons', '스토리지 추가 옵션', 'ADD_ON_FAMILY', 'ACTIVE', 2,
+ '{"display_style": "list"}', '{}')
 ON CONFLICT (product_group_id) DO NOTHING;
 
+-- ============================================================
 -- Products
-INSERT INTO core.products (product_id, product_group_id, external_id, name, type, billing_type, status, attributes) VALUES
-('22222222-2222-2222-2222-222222222201', '11111111-1111-1111-1111-111111111101',
- 'prod_basic', 'Basic Plan', 'PLAN', 'RECURRING', 'ACTIVE',
- '{"tier": 1, "exclusive_with": ["22222222-2222-2222-2222-222222222202", "22222222-2222-2222-2222-222222222203"]}'),
-('22222222-2222-2222-2222-222222222202', '11111111-1111-1111-1111-111111111101',
- 'prod_pro', 'Pro Plan', 'PLAN', 'RECURRING', 'ACTIVE',
- '{"tier": 2, "exclusive_with": ["22222222-2222-2222-2222-222222222201", "22222222-2222-2222-2222-222222222203"]}'),
-('22222222-2222-2222-2222-222222222203', '11111111-1111-1111-1111-111111111101',
- 'prod_analytics', 'Analytics Module', 'ADDON', 'RECURRING', 'ACTIVE',
- '{}')
+-- ============================================================
+
+INSERT INTO core.products (product_id, product_group_id, external_id, name, display_name, description, item_type, status, tier_order, visibility, display_config, visibility_rules, compatibility, tags) VALUES
+('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'prod_basic', 'Basic Plan', '베이직', '기본 디자인 도구', 'SUBSCRIPTION', 'ACTIVE', 1, 'PUBLIC',
+ '{"cta_text": "시작하기"}', '{}', '{}', '{}'),
+('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', 'prod_pro', 'Pro Plan', '프로', '전문가용 디자인 도구', 'SUBSCRIPTION', 'ACTIVE', 2, 'PUBLIC',
+ '{"badge": "POPULAR", "cta_text": "프로 시작하기"}', '{}', '{}', '{"promotional"}'),
+('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000001', 'prod_enterprise', 'Enterprise Plan', '엔터프라이즈', '대기업용', 'SUBSCRIPTION', 'ACTIVE', 3, 'PUBLIC',
+ '{"cta_text": "영업팀 문의"}', '{"segments": ["enterprise"]}', '{}', '{"enterprise_only"}'),
+('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000001', 'prod_analytics', 'Analytics Module', '분석 모듈', '고급 분석 도구', 'ADD_ON', 'ACTIVE', 10, 'PUBLIC',
+ '{}', '{}', '{"requires_any": ["prod_pro", "prod_enterprise"], "included_in": ["prod_enterprise"]}', '{}'),
+('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000002', 'prod_storage_50', 'Storage 50GB', '스토리지 50GB', '추가 50GB', 'ADD_ON', 'ACTIVE', 1, 'PUBLIC',
+ '{}', '{}', '{"requires_any": ["prod_basic", "prod_pro", "prod_enterprise"]}', '{}'),
+('b0000000-0000-0000-0000-000000000006', 'c0000000-0000-0000-0000-000000000002', 'prod_storage_100', 'Storage 100GB', '스토리지 100GB', '추가 100GB', 'ADD_ON', 'ACTIVE', 2, 'PUBLIC',
+ '{}', '{}', '{"requires_any": ["prod_basic", "prod_pro", "prod_enterprise"]}', '{}')
 ON CONFLICT (product_id) DO NOTHING;
 
--- Product condition (Analytics는 Pro 이상만)
-UPDATE core.products
-SET condition = '{"field": "active_products", "op": "CONTAINS_ANY", "value": ["22222222-2222-2222-2222-222222222202"]}'
-WHERE product_id = '22222222-2222-2222-2222-222222222203';
+-- ============================================================
+-- Product Features
+-- ============================================================
 
--- ProductFeatures
-INSERT INTO core.product_features (product_id, feature_code, quota) VALUES
-('22222222-2222-2222-2222-222222222201', 'design-editor', null),
-('22222222-2222-2222-2222-222222222201', 'storage', 10737418240),
-('22222222-2222-2222-2222-222222222202', 'design-editor', null),
-('22222222-2222-2222-2222-222222222202', 'storage', 53687091200),
-('22222222-2222-2222-2222-222222222202', 'export', 100),
-('22222222-2222-2222-2222-222222222203', 'analytics-dashboard', null)
+INSERT INTO core.product_features (product_id, feature_code, quota, display_label, is_highlighted) VALUES
+('b0000000-0000-0000-0000-000000000001', 'design-editor', null, '디자인 에디터', true),
+('b0000000-0000-0000-0000-000000000001', 'storage', 10737418240, '10GB 스토리지', false),
+('b0000000-0000-0000-0000-000000000002', 'design-editor', null, '디자인 에디터', true),
+('b0000000-0000-0000-0000-000000000002', 'storage', 53687091200, '50GB 스토리지', true),
+('b0000000-0000-0000-0000-000000000002', 'export', 100, '월 100회 내보내기', true),
+('b0000000-0000-0000-0000-000000000002', 'api-access', null, 'API 접근', false),
+('b0000000-0000-0000-0000-000000000003', 'design-editor', null, '디자인 에디터', true),
+('b0000000-0000-0000-0000-000000000003', 'storage', 107374182400, '100GB 스토리지', true),
+('b0000000-0000-0000-0000-000000000003', 'export', null, '무제한 내보내기', true),
+('b0000000-0000-0000-0000-000000000003', 'api-access', null, 'API 접근', true),
+('b0000000-0000-0000-0000-000000000003', 'analytics-dashboard', null, '분석 대시보드', true),
+('b0000000-0000-0000-0000-000000000004', 'analytics-dashboard', null, '분석 대시보드', true)
 ON CONFLICT (product_id, feature_code) DO NOTHING;
 
--- Prices
-INSERT INTO core.prices (price_id, product_id, external_id, currency, amount, billing_interval, is_default) VALUES
-('33333333-3333-3333-3333-333333333301', '22222222-2222-2222-2222-222222222201',
- 'price_basic_usd', 'USD', 1900, 'MONTH', true),
-('33333333-3333-3333-3333-333333333302', '22222222-2222-2222-2222-222222222201',
- 'price_basic_eur', 'EUR', 1700, 'MONTH', true),
-('33333333-3333-3333-3333-333333333303', '22222222-2222-2222-2222-222222222202',
- 'price_pro_usd', 'USD', 4900, 'MONTH', true),
-('33333333-3333-3333-3333-333333333304', '22222222-2222-2222-2222-222222222202',
- 'price_pro_eur', 'EUR', 4500, 'MONTH', true)
+-- ============================================================
+-- Prices (정가만. 할인은 Coupon BC의 PromotionPolicy)
+-- ============================================================
+
+INSERT INTO core.prices (price_id, product_id, external_id, currency, amount, billing_period, is_default) VALUES
+('e0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'price_basic_usd_m', 'USD', 1900, 'MONTHLY', true),
+('e0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'price_basic_usd_y', 'USD', 19000, 'YEARLY', false),
+('e0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'price_basic_eur_m', 'EUR', 1700, 'MONTHLY', true),
+('e0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000002', 'price_pro_usd_m', 'USD', 4900, 'MONTHLY', true),
+('e0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000002', 'price_pro_usd_y', 'USD', 49000, 'YEARLY', false),
+('e0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000002', 'price_pro_eur_m', 'EUR', 4500, 'MONTHLY', true),
+('e0000000-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000003', 'price_ent_usd_m', 'USD', 19900, 'MONTHLY', true),
+('e0000000-0000-0000-0000-000000000008', 'b0000000-0000-0000-0000-000000000003', 'price_ent_usd_y', 'USD', 199000, 'YEARLY', false),
+('e0000000-0000-0000-0000-000000000009', 'b0000000-0000-0000-0000-000000000004', 'price_analytics_usd_m', 'USD', 1500, 'MONTHLY', true),
+('e0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000005', 'price_storage50_usd_m', 'USD', 500, 'MONTHLY', true),
+('e0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000006', 'price_storage100_usd_m', 'USD', 900, 'MONTHLY', true)
 ON CONFLICT (price_id) DO NOTHING;
 
--- 조건부 가격 (Enterprise 고객 할인)
-INSERT INTO core.prices (price_id, product_id, external_id, currency, amount, billing_interval, is_default, condition, attributes) VALUES
-('33333333-3333-3333-3333-333333333305', '22222222-2222-2222-2222-222222222202',
- 'price_pro_usd_ent', 'USD', 3900, 'MONTH', false,
- '{"field": "customer_tags", "op": "CONTAINS", "value": "enterprise"}',
- '{"priority": 1, "discount_reason": "enterprise_discount"}')
-ON CONFLICT (price_id) DO NOTHING;
+-- ============================================================
+-- Promotion Policies (Coupon BC)
+-- ============================================================
 
--- 번들 무료 가격 (Pro 구독자에게 Analytics 무료)
-INSERT INTO core.prices (price_id, product_id, external_id, currency, amount, billing_interval, is_default, condition, attributes) VALUES
-('33333333-3333-3333-3333-333333333306', '22222222-2222-2222-2222-222222222203',
- 'price_analytics_usd', 'USD', 1500, 'MONTH', true, null, '{}'),
-('33333333-3333-3333-3333-333333333307', '22222222-2222-2222-2222-222222222203',
- 'price_analytics_free', 'USD', 0, 'MONTH', false,
- '{"field": "active_products", "op": "CONTAINS_ANY", "value": ["22222222-2222-2222-2222-222222222202"]}',
- '{"priority": 0, "discount_reason": "pro_bundle_free"}')
-ON CONFLICT (price_id) DO NOTHING;
+INSERT INTO core.promotion_policies (policy_id, name, description, discount_type, discount_value, eligibility, applicable_product_ids, max_redemptions, valid_from, valid_until, status, stripe_coupon_id) VALUES
+('d0000000-0000-0000-0000-000000000001', 'Enterprise 20% 할인', '엔터프라이즈 고객 대상 20% 할인', 'PERCENTAGE', 20,
+ '{"segments": ["enterprise"]}',
+ '["b0000000-0000-0000-0000-000000000002"]',
+ null, '2026-01-01T00:00:00Z', '2026-12-31T23:59:59Z', 'ACTIVE', 'cpn_stub_ent20'),
+('d0000000-0000-0000-0000-000000000002', 'Pro 구독자 Analytics 무료', 'Pro 플랜 구독 시 Analytics 모듈 무료', 'PERCENTAGE', 100,
+ '{"active_products": ["prod_pro"]}',
+ '["b0000000-0000-0000-0000-000000000004"]',
+ null, '2026-01-01T00:00:00Z', null, 'ACTIVE', 'cpn_stub_profree')
+ON CONFLICT (policy_id) DO NOTHING;

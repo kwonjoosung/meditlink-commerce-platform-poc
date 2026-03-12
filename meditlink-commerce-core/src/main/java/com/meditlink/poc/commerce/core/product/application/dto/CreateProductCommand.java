@@ -1,16 +1,11 @@
 package com.meditlink.poc.commerce.core.product.application.dto;
 
-import java.util.List;
-import java.util.Map;
+import com.meditlink.poc.commerce.core.product.domain.product.ItemType;
 
 public record CreateProductCommand(
         String productGroupId,
         String name,
+        String displayName,
         String description,
-        String type,
-        String billingType,
-        Object condition,
-        Map<String, Object> attributes,
-        Map<String, Object> metadata,
-        List<String> tags
+        ItemType itemType
 ) {}

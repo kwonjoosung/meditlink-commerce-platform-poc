@@ -21,6 +21,22 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     default-schema: ${DB_SCHEMA:client}
 
+  # Kafka Consumer 설정
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      group-id: commerce-client
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+
+# Kafka 토픽 이름
+kafka:
+  topic:
+    product-created: commerce.product.created
+    product-updated: commerce.product.updated
+    price-changed: commerce.price.changed
+
 server:
   port: ${SERVER_PORT:8080}
 

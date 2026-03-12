@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package commerce.v1;
+
+option java_package = "com.meditlink.poc.commerce.common.proto.v1";
+option java_multiple_files = true;
+
+// Kafka를 통해 Core → Client로 전파되는 Product 도메인 이벤트
+
+// Product 생성 이벤트
+message ProductCreatedEvent {
+  string event_id = 1;
+  string product_id = 2;
+  string product_group_id = 3;
+  string name = 4;
+  string description = 5;
+  string type = 6;
+  string billing_type = 7;
+  string external_id = 8;
+  int64 occurred_at = 9;  // epoch millis
+}
+
+// Product 수정 이벤트
+message ProductUpdatedEvent {
+  string event_id = 1;
+  string product_id = 2;
+  string name = 3;
+  string description = 4;
+  bool active = 5;
+  int64 occurred_at = 6;
+}
+
+// Price 변경 이벤트 (생성/삭제 모두 포함)
+message PriceChangedEvent {
+  string event_id = 1;
+  string price_id = 2;
+  string product_id = 3;
+  string currency = 4;
+  int64 amount = 5;
+  string billing_interval = 6;
+  int32 interval_count = 7;
+  bool is_default = 8;
+  string external_id = 9;
+  ChangeType change_type = 10;
+  int64 occurred_at = 11;
+
+  enum ChangeType {
+    CREATED = 0;
+    DELETED = 1;
+  }
+}

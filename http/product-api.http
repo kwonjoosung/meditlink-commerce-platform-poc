@@ -1,10 +1,10 @@
 ### ============================================
-### Product BC API 테스트 시나리오
+### Product BC + Coupon BC API 테스트 시나리오
 ### IntelliJ HTTP Client 용 (.http)
 ### 서버: http://localhost:8081
+### NEW_SPEC 리팩토링 반영 (2026-03-12)
 ### ============================================
 
-### 환경 변수 (응답에서 자동 추출)
 @baseUrl = http://localhost:8081/api
 
 
@@ -12,8 +12,7 @@
 ### 1. ProductGroup CRUD
 ### ============================================
 
-### 1-1. ProductGroup 생성
-# slug가 unique이므로 기존 더미데이터와 충돌하지 않는 값으로 설정
+### 1-1. ProductGroup 생성 (type 필수)
 POST {{baseUrl}}/product-groups
 Content-Type: application/json
 
@@ -21,11 +20,7 @@ Content-Type: application/json
   "name": "Video Suite",
   "slug": "video-suite",
   "description": "비디오 편집 도구 모음",
-  "attributes": {
-    "product_group_type": "plan_tier"
-  },
-  "metadata": {},
-  "tags": ["video", "creative"]
+  "type": "PLAN_FAMILY"
 }
 
 > {%
@@ -33,6 +28,7 @@ Content-Type: application/json
     client.test("ProductGroup 생성 성공", function() {
         client.assert(response.status === 201, "Status 201");
         client.assert(response.body.status === "DRAFT", "Status는 DRAFT");
+        client.assert(response.body.type === "PLAN_FAMILY", "Type은 PLAN_FAMILY");
     });
 %}
 
@@ -83,12 +79,9 @@ Content-Type: application/json
   "name": "Video Suite Pro",
   "slug": "video-suite-pro",
   "description": "프로페셔널 비디오 편집 도구 모음",
-  "attributes": {
-    "product_group_type": "plan_tier",
-    "upgraded": true
-  },
-  "metadata": {},
-  "tags": ["design", "creative", "pro"]
+  "sortOrder": 5,
+  "displayConfig": {"display_style": "comparison_table"},
+  "visibilityRules": {}
 }
 
 > {%
@@ -103,22 +96,15 @@ Content-Type: application/json
 ### 2. Product CRUD
 ### ============================================
 
-### 2-1. Product 생성 (Pro Plan — RECURRING)
+### 2-1. Product 생성 (SUBSCRIPTION)
 POST {{baseUrl}}/product-groups/{{productGroupId}}/products
 Content-Type: application/json
 
 {
   "name": "Pro Plan",
+  "displayName": "프로 플랜",
   "description": "프로 플랜 — 월간 구독",
-  "type": "PLAN",
-  "billingType": "RECURRING",
-  "condition": null,
-  "attributes": {
-    "tier": 2,
-    "recommended": true
-  },
-  "metadata": {},
-  "tags": ["premium", "popular"]
+  "itemType": "SUBSCRIPTION"
 }
 
 > {%
@@ -126,7 +112,8 @@ Content-Type: application/json
     client.test("Product 생성 성공", function() {
         client.assert(response.status === 201, "Status 201");
         client.assert(response.body.status === "ACTIVE", "Status는 ACTIVE");
-        client.assert(response.body.name === "Pro Plan", "이름 일치");
+        client.assert(response.body.itemType === "SUBSCRIPTION", "SUBSCRIPTION");
+        client.assert(response.body.displayName === "프로 플랜", "displayName 일치");
     });
 %}
 
@@ -150,15 +137,13 @@ Content-Type: application/json
 
 {
   "name": "Pro Plan v2",
+  "displayName": "프로 플랜 v2",
   "description": "프로 플랜 v2 — 업그레이드",
-  "condition": null,
-  "attributes": {
-    "tier": 2,
-    "recommended": true,
-    "version": 2
-  },
-  "metadata": {},
-  "tags": ["premium", "popular", "v2"]
+  "tierOrder": 2,
+  "visibility": "PUBLIC",
+  "displayConfig": {"badge": "POPULAR"},
+  "visibilityRules": {},
+  "compatibility": {}
 }
 
 > {%
@@ -170,28 +155,22 @@ Content-Type: application/json
 
 ###
 
-### 2-4. 두 번째 Product 생성 (Starter Plan — ONE_TIME)
+### 2-4. 두 번째 Product 생성 (ADD_ON)
 POST {{baseUrl}}/product-groups/{{productGroupId}}/products
 Content-Type: application/json
 
 {
-  "name": "Starter Pack",
-  "description": "스타터 팩 — 일회성 구매",
-  "type": "ADD_ON",
-  "billingType": "ONE_TIME",
-  "condition": null,
-  "attributes": {
-    "tier": 1
-  },
-  "metadata": {},
-  "tags": ["starter"]
+  "name": "Analytics Module",
+  "displayName": "분석 모듈",
+  "description": "고급 분석 도구 — 일회성 구매",
+  "itemType": "ONE_TIME"
 }
 
 > {%
     client.global.set("product2Id", response.body.productId);
     client.test("두 번째 Product 생성 성공", function() {
         client.assert(response.status === 201, "Status 201");
-        client.assert(response.body.billingType === "ONE_TIME", "ONE_TIME");
+        client.assert(response.body.itemType === "ONE_TIME", "ONE_TIME");
     });
 %}
 
@@ -207,10 +186,8 @@ Content-Type: application/json
 {
   "featureCode": "storage",
   "quota": 53687091200,
-  "attributes": {
-    "unit": "bytes",
-    "display": "50GB"
-  }
+  "displayLabel": "스토리지 50GB",
+  "isHighlighted": true
 }
 
 > {%
@@ -221,16 +198,15 @@ Content-Type: application/json
 
 ###
 
-### 3-2. Feature 추가 — design-editor (quota 없음, 무제한)
+### 3-2. Feature 추가 — design-editor (무제한)
 POST {{baseUrl}}/products/{{productId}}/features
 Content-Type: application/json
 
 {
   "featureCode": "design-editor",
   "quota": null,
-  "attributes": {
-    "type": "unlimited"
-  }
+  "displayLabel": "디자인 에디터",
+  "isHighlighted": false
 }
 
 > {%
@@ -248,9 +224,8 @@ Content-Type: application/json
 {
   "featureCode": "export-pdf",
   "quota": 100,
-  "attributes": {
-    "unit": "pages/month"
-  }
+  "displayLabel": "월 100회 PDF 내보내기",
+  "isHighlighted": true
 }
 
 > {%
@@ -296,7 +271,7 @@ GET {{baseUrl}}/products/{{productId}}/features
 
 
 ### ============================================
-### 4. Price 관리
+### 4. Price 관리 (정가만, billingPeriod 사용)
 ### ============================================
 
 ### 4-1. 기본 가격 생성 (월간 $49)
@@ -306,13 +281,8 @@ Content-Type: application/json
 {
   "currency": "USD",
   "amount": 4900,
-  "billingInterval": "MONTH",
-  "intervalCount": 1,
-  "isDefault": true,
-  "condition": null,
-  "attributes": {},
-  "metadata": {},
-  "tags": []
+  "billingPeriod": "MONTHLY",
+  "isDefault": true
 }
 
 > {%
@@ -321,28 +291,21 @@ Content-Type: application/json
         client.assert(response.status === 201, "Status 201");
         client.assert(response.body.amount === 4900, "금액 4900");
         client.assert(response.body.isDefault === true, "기본 가격");
+        client.assert(response.body.billingPeriod === "MONTHLY", "MONTHLY");
     });
 %}
 
 ###
 
-### 4-2. 연간 가격 생성 (연간 $490 — 할인)
+### 4-2. 연간 가격 생성 (연간 $490)
 POST {{baseUrl}}/products/{{productId}}/prices
 Content-Type: application/json
 
 {
   "currency": "USD",
   "amount": 49000,
-  "billingInterval": "YEAR",
-  "intervalCount": 1,
-  "isDefault": false,
-  "condition": null,
-  "attributes": {
-    "discount_reason": "annual_discount",
-    "savings_percent": 17
-  },
-  "metadata": {},
-  "tags": ["annual"]
+  "billingPeriod": "YEARLY",
+  "isDefault": false
 }
 
 > {%
@@ -350,47 +313,14 @@ Content-Type: application/json
     client.test("연간 Price 생성 성공", function() {
         client.assert(response.status === 201, "Status 201");
         client.assert(response.body.amount === 49000, "금액 49000");
+        client.assert(response.body.billingPeriod === "YEARLY", "YEARLY");
     });
 %}
 
 ###
 
-### 4-3. 조건부 가격 생성 (엔터프라이즈 할인)
-POST {{baseUrl}}/products/{{productId}}/prices
-Content-Type: application/json
-
-{
-  "currency": "USD",
-  "amount": 3900,
-  "billingInterval": "MONTH",
-  "intervalCount": 1,
-  "isDefault": false,
-  "condition": {
-    "field": "customer_tags",
-    "op": "CONTAINS",
-    "value": "enterprise"
-  },
-  "attributes": {
-    "priority": 1,
-    "discount_reason": "enterprise_discount"
-  },
-  "metadata": {},
-  "tags": ["enterprise"]
-}
-
-> {%
-    client.global.set("condPriceId", response.body.priceId);
-    client.test("조건부 Price 생성 성공", function() {
-        client.assert(response.status === 201, "Status 201");
-        client.assert(response.body.amount === 3900, "금액 3900");
-        client.assert(response.body.isDefault === false, "기본 아님");
-    });
-%}
-
-###
-
-### 4-4. Price 삭제
-DELETE {{baseUrl}}/prices/{{condPriceId}}
+### 4-3. Price 삭제
+DELETE {{baseUrl}}/prices/{{yearlyPriceId}}
 
 > {%
     client.test("Price 삭제 성공", function() {
@@ -421,17 +351,91 @@ GET {{baseUrl}}/products/{{productId}}
 > {%
     client.test("Product 상세 + Price 조회", function() {
         client.assert(response.status === 200, "Status 200");
-        client.assert(response.body.prices.length === 2, "Price 2개 (1개 삭제됨)");
+        client.assert(response.body.prices.length === 1, "Price 1개 (1개 삭제됨)");
         client.assert(response.body.features.length === 2, "Feature 2개");
     });
 %}
 
 
 ### ============================================
-### 6. 아카이브 + 삭제 시나리오
+### 6. Coupon BC — 프로모션 정책 + 쿠폰 발행
 ### ============================================
 
-### 6-1. ProductGroup 아카이브
+### 6-1. 프로모션 정책 생성 (20% 할인)
+POST {{baseUrl}}/coupons/policies
+Content-Type: application/json
+
+{
+  "name": "신규 가입 20% 할인",
+  "description": "신규 고객 대상 20% 할인 프로모션",
+  "discountType": "PERCENTAGE",
+  "discountValue": 20,
+  "eligibility": {"segments": ["new_customer"]},
+  "applicableProductIds": [],
+  "maxRedemptions": 100,
+  "validFrom": "2026-01-01T00:00:00Z",
+  "validUntil": "2026-12-31T23:59:59Z"
+}
+
+> {%
+    client.global.set("policyId", response.body.policyId);
+    client.test("프로모션 정책 생성 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+        client.assert(response.body.name === "신규 가입 20% 할인", "이름 일치");
+        client.assert(response.body.stripeCouponId != null, "Stripe Coupon ID 할당됨");
+    });
+%}
+
+###
+
+### 6-2. 쿠폰 발행 (정책 기반)
+POST {{baseUrl}}/coupons/issue
+Content-Type: application/json
+
+{
+  "policyId": "{{policyId}}",
+  "customerId": "cust_test_001"
+}
+
+> {%
+    client.global.set("couponId", response.body.couponId);
+    client.test("쿠폰 발행 성공", function() {
+        client.assert(response.status === 201, "Status 201");
+        client.assert(response.body.status === "ACTIVE", "Status ACTIVE");
+        client.assert(response.body.customerId === "cust_test_001", "고객 ID 일치");
+    });
+%}
+
+###
+
+### 6-3. 쿠폰 사용
+POST {{baseUrl}}/coupons/{{couponId}}/redeem
+
+> {%
+    client.test("쿠폰 사용 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.status === "REDEEMED", "Status REDEEMED");
+    });
+%}
+
+###
+
+### 6-4. 고객별 쿠폰 조회
+GET {{baseUrl}}/coupons/customer/cust_test_001
+
+> {%
+    client.test("고객별 쿠폰 조회 성공", function() {
+        client.assert(response.status === 200, "Status 200");
+        client.assert(response.body.length >= 1, "1개 이상");
+    });
+%}
+
+
+### ============================================
+### 7. 아카이브 + 삭제 시나리오
+### ============================================
+
+### 7-1. ProductGroup 아카이브
 POST {{baseUrl}}/product-groups/{{productGroupId}}/archive
 Content-Type: application/json
 
@@ -444,7 +448,7 @@ Content-Type: application/json
 
 ###
 
-### 6-2. ACTIVE가 아닌 ProductGroup 삭제 시도 (실패 예상 — DRAFT만 삭제 가능)
+### 7-2. ARCHIVED ProductGroup 삭제 시도 (실패 예상 — DRAFT만 삭제 가능)
 DELETE {{baseUrl}}/product-groups/{{productGroupId}}
 
 > {%
@@ -455,22 +459,18 @@ DELETE {{baseUrl}}/product-groups/{{productGroupId}}
 
 
 ### ============================================
-### 7. 에러 케이스
+### 8. 에러 케이스
 ### ============================================
 
-### 7-1. 존재하지 않는 ProductGroup으로 Product 생성 시도
+### 8-1. 존재하지 않는 ProductGroup으로 Product 생성 시도
 POST {{baseUrl}}/product-groups/00000000-0000-0000-0000-000000000000/products
 Content-Type: application/json
 
 {
   "name": "Ghost Product",
+  "displayName": "유령 상품",
   "description": "존재하지 않는 그룹",
-  "type": "PLAN",
-  "billingType": "RECURRING",
-  "condition": null,
-  "attributes": {},
-  "metadata": {},
-  "tags": []
+  "itemType": "SUBSCRIPTION"
 }
 
 > {%
@@ -481,7 +481,7 @@ Content-Type: application/json
 
 ###
 
-### 7-2. 존재하지 않는 Product 조회
+### 8-2. 존재하지 않는 Product 조회
 GET {{baseUrl}}/products/00000000-0000-0000-0000-000000000000
 
 > {%
@@ -489,40 +489,3 @@ GET {{baseUrl}}/products/00000000-0000-0000-0000-000000000000
         client.assert(response.status === 404, "Status 404");
     });
 %}
-
-###
-
-### 7-3. 잘못된 billingType
-POST {{baseUrl}}/product-groups/{{productGroupId}}/products
-Content-Type: application/json
-
-{
-  "name": "Bad Product",
-  "description": "잘못된 billingType",
-  "type": "PLAN",
-  "billingType": "INVALID",
-  "condition": null,
-  "attributes": {},
-  "metadata": {},
-  "tags": []
-}
-
-> {%
-    client.test("잘못된 billingType → 400", function() {
-        client.assert(response.status === 400, "Status 400");
-    });
-%}
-
-
-### ============================================
-### 8. 정리 (선택적)
-### ============================================
-
-### 8-1. Product 삭제
-# DELETE {{baseUrl}}/products/{{productId}}
-
-### 8-2. 두 번째 Product 삭제
-# DELETE {{baseUrl}}/products/{{product2Id}}
-
-### 8-3. ProductGroup 삭제 (DRAFT 상태일 때만 가능)
-# DELETE {{baseUrl}}/product-groups/{{productGroupId}}

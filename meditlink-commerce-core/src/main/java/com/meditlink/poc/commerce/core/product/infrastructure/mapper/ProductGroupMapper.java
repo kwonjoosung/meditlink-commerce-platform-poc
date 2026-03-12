@@ -2,13 +2,12 @@ package com.meditlink.poc.commerce.core.product.infrastructure.mapper;
 
 import com.meditlink.poc.commerce.core.product.domain.productgroup.ProductGroup;
 import com.meditlink.poc.commerce.core.product.domain.productgroup.ProductGroupStatus;
+import com.meditlink.poc.commerce.core.product.domain.productgroup.ProductGroupType;
 import com.meditlink.poc.commerce.core.product.infrastructure.persistence.entity.ProductGroupEntity;
 import com.meditlink.poc.commerce.core.shared.domain.ProductGroupId;
-import com.meditlink.poc.commerce.core.shared.infra.rule.RuleDeserializer;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public final class ProductGroupMapper {
 
@@ -20,11 +19,11 @@ public final class ProductGroupMapper {
                 entity.getSlug(),
                 entity.getName(),
                 entity.getDescription(),
+                ProductGroupType.valueOf(entity.getType()),
                 ProductGroupStatus.valueOf(entity.getStatus()),
-                entity.getDisplayOrder(),
-                entity.getCondition() != null ? RuleDeserializer.deserialize(entity.getCondition()) : null,
-                entity.getAttributes(),
-                entity.getMetadata(),
+                entity.getSortOrder(),
+                entity.getDisplayConfig(),
+                entity.getVisibilityRules(),
                 entity.getTags() != null ? Arrays.asList(entity.getTags()) : List.of(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
@@ -37,11 +36,11 @@ public final class ProductGroupMapper {
         entity.setSlug(domain.getSlug());
         entity.setName(domain.getName());
         entity.setDescription(domain.getDescription());
+        entity.setType(domain.getType().name());
         entity.setStatus(domain.getStatus().name());
-        entity.setDisplayOrder(domain.getDisplayOrder());
-        entity.setCondition(domain.getCondition() != null ? RuleDeserializer.serialize(domain.getCondition()) : null);
-        entity.setAttributes(domain.getAttributes());
-        entity.setMetadata(domain.getMetadata());
+        entity.setSortOrder(domain.getSortOrder());
+        entity.setDisplayConfig(domain.getDisplayConfig());
+        entity.setVisibilityRules(domain.getVisibilityRules());
         entity.setTags(domain.getTags().toArray(new String[0]));
         entity.setCreatedAt(domain.getCreatedAt());
         entity.setUpdatedAt(domain.getUpdatedAt());

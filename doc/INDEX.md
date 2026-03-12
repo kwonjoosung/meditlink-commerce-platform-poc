@@ -10,6 +10,8 @@
 |------------------------------------------------------|------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md)                 | 모듈 구조, 패키지 규칙, 의존성 방향, DB 전략, 레이어 규칙 |
 | [PRODUCT-BC.md](./PRODUCT-BC.md)                     | Product BC 상세 — 3 Aggregate, 도메인 모델, 불변식, DB 스키마, JSONB 규약, 예시 데이터 |
+| [FEATURE-BC.md](./FEATURE-BC.md)                     | Feature BC — Feature Aggregate, Module API, DB 스키마 |
+| [COUPON-BC.md](./COUPON-BC.md)                       | Coupon BC — PromotionPolicy, Coupon Aggregate, Stripe Coupon 동기화, 할인 정책 |
 | [RULE-ENGINE.md](./RULE-ENGINE.md)                   | Rule 구조, 연산자, 평가 로직, Price 매칭 전략 (condition 우선 → attributes fallback) |
 | [PRODUCT-API-SPEC.md](./PRODUCT-API-SPEC.md)         | Product 모듈 Public API — 모듈 내부 인터페이스 + REST 엔드포인트, DTO 정의 |
 | [STRIPE-SYNC.md](./STRIPE-SYNC.md)                   | Stripe 동기화 — 방향, 매핑, 실패 처리, 불일치 감지, PG 교체 전략 |

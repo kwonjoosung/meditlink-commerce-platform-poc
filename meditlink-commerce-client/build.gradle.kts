@@ -21,6 +21,9 @@ dependencies {
     implementation(libs.liquibase.core)
     runtimeOnly(libs.postgresql)
 
+    // Kafka (비동기 이벤트 수신)
+    implementation(libs.spring.kafka)
+
     // core 호출용 gRPC client stub
     implementation(libs.grpc.netty.shaded)
     implementation(libs.grpc.protobuf)

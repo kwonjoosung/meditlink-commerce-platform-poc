@@ -2,18 +2,15 @@ package com.meditlink.poc.commerce.core.product.domain.price;
 
 import com.meditlink.poc.commerce.core.shared.domain.PriceId;
 import com.meditlink.poc.commerce.core.shared.domain.ProductId;
-import com.meditlink.poc.commerce.core.shared.infra.rule.Rule;
-import com.meditlink.poc.commerce.core.shared.infra.rule.RuleValidator;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 /**
  * Price Aggregate Root.
- * Product에 속하는 가격 정보.
+ * Product에 속하는 가격 정보. 정가(list price)만 관리한다.
+ * 프로모션/할인은 Coupon BC가 담당 — Price를 오염시키지 않음.
  * Stripe Price는 금액 수정 불가 → 가격 변경 시 기존 비활성화 + 새 Price 생성.
  */
 public class Price {
@@ -25,37 +22,28 @@ public class Price {
     private String externalId;
     private String currency;
     private long amount;
-    private String billingInterval;
-    private Integer intervalCount;
+    private BillingPeriod billingPeriod;
     private boolean isDefault;
-    private Rule condition;
-    private Map<String, Object> attributes;
-    private Map<String, Object> metadata;
-    private List<String> tags;
     private Instant createdAt;
     private Instant updatedAt;
 
     private Price() {}
 
     public static Price create(ProductId productId, String currency, long amount,
-                               String billingInterval, Integer intervalCount, boolean isDefault) {
+                               BillingPeriod billingPeriod, boolean isDefault) {
         Objects.requireNonNull(productId, "productId는 null일 수 없습니다");
+        Objects.requireNonNull(billingPeriod, "billingPeriod는 null일 수 없습니다");
         validateCurrency(currency);
         validateAmount(amount);
 
         var p = new Price();
         p.priceId = PriceId.generate();
         p.productId = productId;
-        p.externalId = null; // Stripe 동기화 후 설정
+        p.externalId = null;
         p.currency = currency;
         p.amount = amount;
-        p.billingInterval = billingInterval;
-        p.intervalCount = intervalCount;
+        p.billingPeriod = billingPeriod;
         p.isDefault = isDefault;
-        p.condition = null;
-        p.attributes = Map.of();
-        p.metadata = Map.of();
-        p.tags = List.of();
         p.createdAt = Instant.now();
         p.updatedAt = Instant.now();
         return p;
@@ -63,23 +51,16 @@ public class Price {
 
     public static Price reconstitute(
             PriceId priceId, ProductId productId, String externalId,
-            String currency, long amount, String billingInterval, Integer intervalCount,
-            boolean isDefault, Rule condition,
-            Map<String, Object> attributes, Map<String, Object> metadata,
-            List<String> tags, Instant createdAt, Instant updatedAt) {
+            String currency, long amount, BillingPeriod billingPeriod,
+            boolean isDefault, Instant createdAt, Instant updatedAt) {
         var p = new Price();
         p.priceId = priceId;
         p.productId = productId;
         p.externalId = externalId;
         p.currency = currency;
         p.amount = amount;
-        p.billingInterval = billingInterval;
-        p.intervalCount = intervalCount;
+        p.billingPeriod = billingPeriod;
         p.isDefault = isDefault;
-        p.condition = condition;
-        p.attributes = attributes != null ? attributes : Map.of();
-        p.metadata = metadata != null ? metadata : Map.of();
-        p.tags = tags != null ? tags : List.of();
         p.createdAt = createdAt;
         p.updatedAt = updatedAt;
         return p;
@@ -92,32 +73,6 @@ public class Price {
             throw new IllegalArgumentException("externalId는 비어 있을 수 없습니다");
         }
         this.externalId = externalId;
-        this.updatedAt = Instant.now();
-    }
-
-    public void updateCondition(Rule condition) {
-        if (condition != null) {
-            var result = RuleValidator.validate(condition);
-            if (!result.valid()) {
-                throw new IllegalArgumentException("유효하지 않은 조건: " + result.errors());
-            }
-        }
-        this.condition = condition;
-        this.updatedAt = Instant.now();
-    }
-
-    public void updateAttributes(Map<String, Object> attributes) {
-        this.attributes = attributes != null ? attributes : Map.of();
-        this.updatedAt = Instant.now();
-    }
-
-    public void updateMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata != null ? metadata : Map.of();
-        this.updatedAt = Instant.now();
-    }
-
-    public void updateTags(List<String> tags) {
-        this.tags = tags != null ? tags : List.of();
         this.updatedAt = Instant.now();
     }
 
@@ -138,13 +93,8 @@ public class Price {
     public String getExternalId() { return externalId; }
     public String getCurrency() { return currency; }
     public long getAmount() { return amount; }
-    public String getBillingInterval() { return billingInterval; }
-    public Integer getIntervalCount() { return intervalCount; }
+    public BillingPeriod getBillingPeriod() { return billingPeriod; }
     public boolean isDefault() { return isDefault; }
-    public Rule getCondition() { return condition; }
-    public Map<String, Object> getAttributes() { return attributes; }
-    public Map<String, Object> getMetadata() { return metadata; }
-    public List<String> getTags() { return tags; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 

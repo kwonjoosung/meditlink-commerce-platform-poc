@@ -8,10 +8,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-/**
- * Stripe Product 동기화 구현체.
- * stripe 프로파일이 활성화될 때만 사용. 그 외에는 Stub 사용.
- */
 @Component
 @Primary
 @Profile("stripe")
@@ -24,8 +20,7 @@ public class StripeProductSyncService implements StripeProductSync {
                     .setName(product.getName())
                     .setDescription(product.getDescription())
                     .putMetadata("internal_id", product.getProductId().toString())
-                    .putMetadata("type", product.getType())
-                    .putMetadata("billing_type", product.getBillingType())
+                    .putMetadata("item_type", product.getItemType().name())
                     .build();
 
             var stripeProduct = com.stripe.model.Product.create(params);

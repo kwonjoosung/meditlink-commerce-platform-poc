@@ -19,21 +19,17 @@ public class ProductGroupCommandService {
     }
 
     public ProductGroup create(CreateProductGroupCommand cmd) {
-        var pg = ProductGroup.create(cmd.name(), cmd.slug(), cmd.description());
-        if (cmd.attributes() != null) pg.updateAttributes(cmd.attributes());
-        if (cmd.metadata() != null) pg.updateMetadata(cmd.metadata());
-        if (cmd.tags() != null) pg.updateTags(cmd.tags());
+        var pg = ProductGroup.create(cmd.name(), cmd.slug(), cmd.description(), cmd.type());
         return repository.save(pg);
     }
 
     public ProductGroup update(String id, UpdateProductGroupCommand cmd) {
-        var pg = repository.findById(ProductGroupId.of(id))
-                .orElseThrow(() -> new IllegalArgumentException("ProductGroup을 찾을 수 없습니다: " + id));
+        var pg = findOrThrow(id);
 
         pg.updateInfo(cmd.name(), cmd.slug(), cmd.description());
-        if (cmd.attributes() != null) pg.updateAttributes(cmd.attributes());
-        if (cmd.metadata() != null) pg.updateMetadata(cmd.metadata());
-        if (cmd.tags() != null) pg.updateTags(cmd.tags());
+        pg.updateSortOrder(cmd.sortOrder());
+        pg.updateDisplayConfig(cmd.displayConfig());
+        pg.updateVisibilityRules(cmd.visibilityRules());
         return repository.save(pg);
     }
 

@@ -6,6 +6,7 @@ import com.meditlink.poc.commerce.core.product.application.command.ProductComman
 import com.meditlink.poc.commerce.core.product.application.command.ProductGroupCommandService;
 import com.meditlink.poc.commerce.core.product.application.dto.*;
 import com.meditlink.poc.commerce.core.product.application.query.ProductQueryService;
+import com.meditlink.poc.commerce.core.product.domain.product.ItemType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -98,8 +99,7 @@ public class ProductController {
     public ResponseEntity<ProductDto> createProduct(@PathVariable String productGroupId,
                                                     @RequestBody CreateProductCommand cmd) {
         var fullCmd = new CreateProductCommand(
-                productGroupId, cmd.name(), cmd.description(), cmd.type(), cmd.billingType(),
-                cmd.condition(), cmd.attributes(), cmd.metadata(), cmd.tags()
+                productGroupId, cmd.name(), cmd.displayName(), cmd.description(), cmd.itemType()
         );
         var product = productCommandService.create(fullCmd);
         return ResponseEntity.status(HttpStatus.CREATED).body(DtoAssembler.toDto(product));
@@ -158,8 +158,7 @@ public class ProductController {
                                                 @RequestBody CreatePriceCommand cmd) {
         var fullCmd = new CreatePriceCommand(
                 productId, cmd.currency(), cmd.amount(),
-                cmd.billingInterval(), cmd.intervalCount(), cmd.isDefault(),
-                cmd.condition(), cmd.attributes(), cmd.metadata(), cmd.tags()
+                cmd.billingPeriod(), cmd.isDefault()
         );
         var price = priceCommandService.create(fullCmd);
         return ResponseEntity.status(HttpStatus.CREATED).body(DtoAssembler.toDto(price));

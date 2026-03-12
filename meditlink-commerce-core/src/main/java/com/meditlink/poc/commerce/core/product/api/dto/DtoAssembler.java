@@ -4,7 +4,6 @@ import com.meditlink.poc.commerce.core.product.domain.price.Price;
 import com.meditlink.poc.commerce.core.product.domain.product.Product;
 import com.meditlink.poc.commerce.core.product.domain.product.ProductFeature;
 import com.meditlink.poc.commerce.core.product.domain.productgroup.ProductGroup;
-import com.meditlink.poc.commerce.core.shared.infra.rule.RuleDeserializer;
 
 import java.util.List;
 
@@ -18,12 +17,11 @@ public final class DtoAssembler {
                 pg.getSlug(),
                 pg.getName(),
                 pg.getDescription(),
+                pg.getType().name(),
                 pg.getStatus().name(),
-                pg.getDisplayOrder(),
-                pg.getCondition() != null ? RuleDeserializer.serialize(pg.getCondition()) : null,
-                pg.getAttributes(),
-                pg.getMetadata(),
-                pg.getTags(),
+                pg.getSortOrder(),
+                pg.getDisplayConfig(),
+                pg.getVisibilityRules(),
                 products
         );
     }
@@ -35,18 +33,18 @@ public final class DtoAssembler {
     public static ProductDto toDto(Product p, List<PriceDto> prices) {
         return new ProductDto(
                 p.getProductId().toString(),
-                p.getProductGroupId().toString(),
+                p.getProductGroupId() != null ? p.getProductGroupId().toString() : null,
                 p.getExternalId(),
                 p.getName(),
+                p.getDisplayName(),
                 p.getDescription(),
-                p.getType(),
-                p.getBillingType(),
+                p.getItemType().name(),
                 p.getStatus().name(),
-                p.getDisplayOrder(),
-                p.getCondition() != null ? RuleDeserializer.serialize(p.getCondition()) : null,
-                p.getAttributes(),
-                p.getMetadata(),
-                p.getTags(),
+                p.getTierOrder(),
+                p.getVisibility().name(),
+                p.getDisplayConfig(),
+                p.getVisibilityRules(),
+                p.getCompatibility(),
                 p.getFeatures().stream().map(DtoAssembler::toDto).toList(),
                 prices
         );
@@ -61,7 +59,8 @@ public final class DtoAssembler {
                 f.getProductId().toString(),
                 f.getFeatureCode(),
                 f.getQuota(),
-                f.getAttributes()
+                f.getDisplayLabel(),
+                f.isHighlighted()
         );
     }
 
@@ -72,13 +71,8 @@ public final class DtoAssembler {
                 p.getExternalId(),
                 p.getCurrency(),
                 p.getAmount(),
-                p.getBillingInterval(),
-                p.getIntervalCount(),
-                p.isDefault(),
-                p.getCondition() != null ? RuleDeserializer.serialize(p.getCondition()) : null,
-                p.getAttributes(),
-                p.getMetadata(),
-                p.getTags()
+                p.getBillingPeriod().name(),
+                p.isDefault()
         );
     }
 }

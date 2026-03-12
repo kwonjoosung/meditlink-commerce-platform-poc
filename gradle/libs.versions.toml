@@ -17,6 +17,7 @@ stripe = "28.3.0"
 hypersistence-utils = "3.15.2"
 archunit = "1.4.0"
 jackson = "2.18.3"
+spring-kafka = "4.0.0"
 
 [libraries]
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
@@ -37,6 +38,8 @@ stripe-java = { module = "com.stripe:stripe-java", version.ref = "stripe" }
 hypersistence-utils = { module = "io.hypersistence:hypersistence-utils-hibernate-70", version.ref = "hypersistence-utils" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+spring-kafka = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka" }
+spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test", version.ref = "spring-kafka" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
