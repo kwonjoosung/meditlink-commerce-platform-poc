@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeditLink Commerce PoC Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0d0d1a;
+    --surface: #1a1a2e;
+    --card: #16213e;
+    --accent: #0f3460;
+    --highlight: #e94560;
+    --highlight2: #533483;
+    --text: #e0e0f0;
+    --text-muted: #8888aa;
+    --border: #2a2a4a;
+    --success: #2ecc71;
+    --warning: #f39c12;
+    --error: #e74c3c;
+    --info: #3498db;
+    --active-flow: #e94560;
+    --core-color: #e94560;
+    --kafka-color: #f39c12;
+    --client-color: #3498db;
+    --grpc-color: #9b59b6;
+    --font-sans: 'Noto Sans KR', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    min-width: 1200px;
+    overflow-x: auto;
+  }
+
+  /* ── 헤더 ── */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5);
+  }
+  .app-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .app-header .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--highlight), var(--highlight2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+  }
+  .app-header h1 {
+    font-size: 18px; font-weight: 700;
+    background: linear-gradient(90deg, #fff 0%, var(--highlight) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .app-header .arch-pills {
+    display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap;
+  }
+  .arch-pill {
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    border: 1px solid; letter-spacing: 0.3px;
+  }
+  .arch-pill.core  { color: var(--core-color);  border-color: var(--core-color);  background: rgba(233,69,96,0.08); }
+  .arch-pill.kafka { color: var(--kafka-color); border-color: var(--kafka-color); background: rgba(243,156,18,0.08); }
+  .arch-pill.client{ color: var(--client-color);border-color: var(--client-color);background: rgba(52,152,219,0.08); }
+  .arch-pill.grpc  { color: var(--grpc-color);  border-color: var(--grpc-color);  background: rgba(155,89,182,0.08); }
+
+  /* ── 레이아웃 ── */
+  .app-body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 69px);
+  }
+
+  /* ── 사이드바 ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky; top: 69px;
+    height: calc(100vh - 69px);
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 24px;
+  }
+  .sidebar-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: -8px;
+  }
+  .flow-diagram {
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+  .flow-node {
+    width: 100%; padding: 10px 14px; border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 500;
+    text-align: center; position: relative;
+    transition: all 0.3s ease;
+  }
+  .flow-node.core   { color: var(--core-color);  border-color: var(--core-color);  background: rgba(233,69,96,0.06); }
+  .flow-node.db     { color: #aaa; border-color: #444; background: rgba(255,255,255,0.03); }
+  .flow-node.kafka  { color: var(--kafka-color); border-color: var(--kafka-color); background: rgba(243,156,18,0.06); }
+  .flow-node.client { color: var(--client-color);border-color: var(--client-color);background: rgba(52,152,219,0.06); }
+  .flow-node.grpc   { color: var(--grpc-color);  border-color: var(--grpc-color);  background: rgba(155,89,182,0.06); }
+  .flow-node.active {
+    box-shadow: 0 0 12px currentColor;
+    transform: scale(1.03);
+    filter: brightness(1.3);
+  }
+  .flow-node .node-icon { font-size: 16px; display: block; margin-bottom: 4px; }
+  .flow-node .node-label { font-size: 11px; }
+  .flow-arrow {
+    width: 2px; height: 20px; margin: 0 auto;
+    background: var(--border); position: relative;
+    transition: background 0.3s;
+  }
+  .flow-arrow::after {
+    content: '▼'; position: absolute; bottom: -8px; left: 50%;
+    transform: translateX(-50%); font-size: 8px; color: var(--border);
+    transition: color 0.3s;
+  }
+  .flow-arrow.active-core   { background: var(--core-color); }
+  .flow-arrow.active-kafka  { background: var(--kafka-color); }
+  .flow-arrow.active-client { background: var(--client-color); }
+  .flow-arrow.active-core::after   { color: var(--core-color); }
+  .flow-arrow.active-kafka::after  { color: var(--kafka-color); }
+  .flow-arrow.active-client::after { color: var(--client-color); }
+  .flow-label {
+    font-size: 10px; color: var(--text-muted); text-align: center;
+    padding: 2px 6px;
+    transition: color 0.3s;
+  }
+  .flow-label.active-core   { color: var(--core-color); }
+  .flow-label.active-kafka  { color: var(--kafka-color); }
+  .flow-label.active-client { color: var(--client-color); }
+
+  .sidebar-stats {
+    margin-top: auto;
+  }
+  .stat-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .stat-item:last-child { border-bottom: none; }
+  .stat-val { font-weight: 700; font-family: var(--font-mono); }
+  .stat-val.success { color: var(--success); }
+  .stat-val.error   { color: var(--error); }
+
+  /* ── 메인 ── */
+  .main-content { padding: 24px; overflow-y: auto; }
+
+  /* ── 탭 ── */
+  .tabs-nav {
+    display: flex; gap: 4px; margin-bottom: 24px;
+    border-bottom: 1px solid var(--border); padding-bottom: 0;
+  }
+  .tab-btn {
+    padding: 10px 20px; border: none; background: transparent;
+    color: var(--text-muted); cursor: pointer; font-family: var(--font-sans);
+    font-size: 14px; font-weight: 500; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; border-radius: var(--radius) var(--radius) 0 0;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .tab-btn.active {
+    color: var(--highlight); border-bottom-color: var(--highlight);
+    background: rgba(233,69,96,0.06);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── 카드 ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 10px;
+    font-weight: 600; letter-spacing: 0.5px;
+  }
+  .badge-core   { background: rgba(233,69,96,0.2); color: var(--core-color); }
+  .badge-client { background: rgba(52,152,219,0.2); color: var(--client-color); }
+
+  /* ── 폼 ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  input, select, textarea {
+    background: var(--accent); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 12px; border-radius: var(--radius);
+    font-family: var(--font-sans); font-size: 13px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--highlight); box-shadow: 0 0 0 3px rgba(233,69,96,0.15);
+  }
+  select option { background: var(--surface); }
+  textarea { resize: vertical; min-height: 60px; font-family: var(--font-mono); font-size: 12px; }
+  .form-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+  /* ── 버튼 ── */
+  .btn {
+    padding: 8px 16px; border: none; border-radius: var(--radius);
+    cursor: pointer; font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary   { background: var(--highlight); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #c73652; transform: translateY(-1px); }
+  .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+  .btn-success   { background: rgba(46,204,113,0.15); color: var(--success); border: 1px solid var(--success); }
+  .btn-success:hover:not(:disabled) { background: rgba(46,204,113,0.25); }
+  .btn-warning   { background: rgba(243,156,18,0.15); color: var(--warning); border: 1px solid var(--warning); }
+  .btn-warning:hover:not(:disabled) { background: rgba(243,156,18,0.25); }
+  .btn-danger    { background: rgba(231,76,60,0.15); color: var(--error); border: 1px solid var(--error); }
+  .btn-danger:hover:not(:disabled) { background: rgba(231,76,60,0.25); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-icon { padding: 6px 8px; }
+
+  /* ── 테이블 ── */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: var(--accent); padding: 10px 14px; text-align: left;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    letter-spacing: 0.5px; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px; font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.025); }
+  .td-mono { font-family: var(--font-mono); font-size: 12px; }
+  .td-id   { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── 상태 배지 ── */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+  }
+  .status-ACTIVE   { background: rgba(46,204,113,0.15); color: var(--success); }
+  .status-INACTIVE { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+  .status-ARCHIVED { background: rgba(231,76,60,0.1);   color: #888; }
+  .status-DRAFT    { background: rgba(243,156,18,0.15); color: var(--warning); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ── 섹션 구분 ── */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::before {
+    content: ''; display: block;
+    width: 3px; height: 16px; border-radius: 2px;
+    background: var(--highlight);
+  }
+
+  /* ── JSON 뷰어 ── */
+  .json-viewer {
+    background: #0a0a18; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 16px;
+    font-family: var(--font-mono); font-size: 12px; line-height: 1.6;
+    overflow-x: auto; max-height: 300px; overflow-y: auto;
+    white-space: pre;
+  }
+  .json-key     { color: #7ec8e3; }
+  .json-string  { color: #a8d8a8; }
+  .json-number  { color: #f0a500; }
+  .json-boolean { color: #e94560; }
+  .json-null    { color: #888; }
+  .json-brace   { color: #ccc; }
+
+  /* ── 이벤트 로그 ── */
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-entry {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .log-summary {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .log-summary:hover { background: rgba(255,255,255,0.03); }
+  .log-time { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); min-width: 80px; }
+  .log-method {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px; min-width: 44px; text-align: center;
+  }
+  .method-GET    { background: rgba(52,152,219,0.2);  color: #3498db; }
+  .method-POST   { background: rgba(46,204,113,0.2);  color: var(--success); }
+  .method-PUT    { background: rgba(243,156,18,0.2);  color: var(--warning); }
+  .method-DELETE { background: rgba(231,76,60,0.2);   color: var(--error); }
+  .log-url  { font-family: var(--font-mono); font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .log-status {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+    min-width: 36px; text-align: center;
+  }
+  .log-status.ok  { color: var(--success); }
+  .log-status.err { color: var(--error); }
+  .log-duration { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); min-width: 48px; text-align: right; }
+  .log-details { padding: 0 14px 12px; border-top: 1px solid var(--border); display: none; }
+  .log-details.open { display: block; }
+  .log-details-tabs { display: flex; gap: 4px; margin: 8px 0; }
+  .log-dtab {
+    font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer;
+    background: var(--accent); color: var(--text-muted); border: 1px solid var(--border);
+  }
+  .log-dtab.active { background: var(--highlight); color: #fff; border-color: var(--highlight); }
+
+  /* ── 토스트 ── */
+  .toast-container {
+    position: fixed; top: 80px; right: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 9999; pointer-events: none;
+  }
+  .toast {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 16px; border-radius: var(--radius);
+    font-size: 13px; min-width: 280px; max-width: 360px;
+    box-shadow: var(--shadow); pointer-events: all;
+    animation: slideIn 0.3s ease;
+    border-left: 3px solid;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; max-height: 80px; }
+    to   { transform: translateX(100%); opacity: 0; max-height: 0; }
+  }
+  .toast.hiding { animation: slideOut 0.3s ease forwards; }
+  .toast-success { background: #0d2a1f; border-color: var(--success); }
+  .toast-error   { background: #2a0d0d; border-color: var(--error); }
+  .toast-info    { background: #0d1a2a; border-color: var(--info); }
+  .toast-icon  { font-size: 16px; flex-shrink: 0; }
+  .toast-body  { flex: 1; }
+  .toast-title { font-weight: 600; margin-bottom: 2px; }
+  .toast-msg   { color: var(--text-muted); font-size: 12px; }
+
+  /* ── 스피너 ── */
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.15);
+    border-top-color: currentColor; border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── 빈 상태 ── */
+  .empty-state {
+    text-align: center; padding: 32px; color: var(--text-muted);
+    font-size: 13px;
+  }
+  .empty-state .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+  /* ── 선택된 항목 하이라이트 ── */
+  tr.selected td { background: rgba(233,69,96,0.08) !important; }
+
+  /* ── BFF 결과 ── */
+  .bff-result-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px;
+    margin-top: 12px;
+  }
+  .bff-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .bff-meta-item { background: var(--accent); border-radius: var(--radius); padding: 10px 14px; }
+  .bff-meta-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .bff-meta-value { font-size: 14px; font-weight: 600; }
+  .price-highlight {
+    font-size: 28px; font-weight: 700; font-family: var(--font-mono);
+    color: var(--success);
+  }
+  .price-original {
+    text-decoration: line-through; color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+  .coupon-badge {
+    background: rgba(243,156,18,0.2); color: var(--warning);
+    padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+  }
+
+  /* ── 구분선 ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── 필터 바 ── */
+  .filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .filter-bar input { flex: 1; min-width: 160px; }
+
+  /* 로그 탭 툴바 */
+  .log-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+  /* 설명 텍스트 */
+  .help-text { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header class="app-header">
+  <div class="logo">
+    <div class="logo-icon">M</div>
+    <h1>MeditLink Commerce PoC Demo</h1>
+  </div>
+  <div class="arch-pills">
+    <span class="arch-pill core">Core REST :8081</span>
+    <span class="arch-pill kafka">Kafka</span>
+    <span class="arch-pill client">Client BFF :8080</span>
+    <span class="arch-pill grpc">gRPC</span>
+  </div>
+</header>
+
+<!-- 토스트 컨테이너 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- 바디 -->
+<div class="app-body">
+
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <div class="sidebar-title">데이터 흐름</div>
+
+    <div class="flow-diagram">
+      <div class="flow-node core" id="fn-browser">
+        <span class="node-icon">🖥️</span>
+        <span class="node-label">브라우저</span>
+      </div>
+
+      <div class="flow-arrow" id="fa-core" style="margin:0 auto"></div>
+      <div class="flow-label" id="fl-core">REST / HTTP</div>
+
+      <div class="flow-node core" id="fn-core">
+        <span class="node-icon">⚙️</span>
+        <span class="node-label">Core API :8081</span>
+      </div>
+
+      <div class="flow-arrow" id="fa-db"></div>
+      <div class="flow-label" id="fl-db">JPA / SQL</div>
+
+      <div class="flow-node db" id="fn-db">
+        <span class="node-icon">🗄️</span>
+        <span class="node-label">PostgreSQL</span>
+      </div>
+
+      <div class="flow-arrow" id="fa-kafka"></div>
+      <div class="flow-label" id="fl-kafka">이벤트</div>
+
+      <div class="flow-node kafka" id="fn-kafka">
+        <span class="node-icon">📨</span>
+        <span class="node-label">Kafka</span>
+      </div>
+
+      <div class="flow-arrow" id="fa-client"></div>
+      <div class="flow-label" id="fl-client">Consume</div>
+
+      <div class="flow-node client" id="fn-client">
+        <span class="node-icon">🔌</span>
+        <span class="node-label">Client BFF :8080</span>
+      </div>
+
+      <div class="flow-arrow" id="fa-grpc"></div>
+      <div class="flow-label" id="fl-grpc">gRPC</div>
+
+      <div class="flow-node grpc" id="fn-grpc">
+        <span class="node-icon">🔗</span>
+        <span class="node-label">Core gRPC</span>
+      </div>
+    </div>
+
+    <div class="sidebar-stats">
+      <div class="sidebar-title" style="margin-bottom:10px">통계</div>
+      <div class="stat-item">
+        <span>전체 요청</span>
+        <span class="stat-val" id="stat-total">0</span>
+      </div>
+      <div class="stat-item">
+        <span>성공</span>
+        <span class="stat-val success" id="stat-ok">0</span>
+      </div>
+      <div class="stat-item">
+        <span>실패</span>
+        <span class="stat-val error" id="stat-err">0</span>
+      </div>
+      <div class="stat-item">
+        <span>평균 응답</span>
+        <span class="stat-val" id="stat-avg">—</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="main-content">
+
+    <!-- 탭 내비게이션 -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-manage', this)">🛠️ 상품 관리</button>
+      <button class="tab-btn" onclick="switchTab('tab-bff', this)">🔍 BFF 조회</button>
+      <button class="tab-btn" onclick="switchTab('tab-logs', this)">📋 이벤트 로그 <span id="log-count-badge" style="background:rgba(233,69,96,0.3);color:#e94560;padding:1px 6px;border-radius:10px;font-size:11px;margin-left:4px">0</span></button>
+    </nav>
+
+    <!-- ─────────────────────────────── 탭 1: 상품 관리 ─────────────────────────────── -->
+    <div id="tab-manage" class="tab-panel active">
+
+      <!-- ProductGroup 섹션 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            ProductGroup 관리
+            <span class="badge badge-core">Core REST</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadGroups()">↻ 새로고침</button>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title">새 ProductGroup 생성</div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>이름 *</label>
+            <input id="pg-name" placeholder="예: 진료 구독 플랜" />
+          </div>
+          <div class="form-group">
+            <label>슬러그 *</label>
+            <input id="pg-slug" placeholder="예: consultation-plan" />
+          </div>
+          <div class="form-group full">
+            <label>설명</label>
+            <input id="pg-desc" placeholder="상품 그룹 설명" />
+          </div>
+          <div class="form-group">
+            <label>타입</label>
+            <select id="pg-type"><option value="PLAN_FAMILY">PLAN_FAMILY</option><option value="ADD_ON_BUNDLE">ADD_ON_BUNDLE</option><option value="MIXED">MIXED</option></select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="createGroup()">+ 생성</button>
+        </div>
+
+        <hr class="divider">
+
+        <div class="section-header">
+          <div class="section-title">목록</div>
+        </div>
+        <div id="pg-list-wrap">
+          <div class="empty-state"><div class="empty-icon">📦</div>데이터 없음 — 새로고침 하세요</div>
+        </div>
+      </div>
+
+      <!-- Product 섹션 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            Product 관리
+            <span class="badge badge-core">Core REST</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadProducts()">↻ 새로고침</button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>ProductGroup *</label>
+            <select id="prod-pg-sel" onchange="loadProducts()">
+              <option value="">— 그룹 선택 —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>이름 *</label>
+            <input id="prod-name" placeholder="예: 베이직 플랜" />
+          </div>
+          <div class="form-group">
+            <label>표시 이름</label>
+            <input id="prod-displayName" placeholder="예: 베이직 플랜" />
+          </div>
+          <div class="form-group">
+            <label>상품 유형</label>
+            <select id="prod-itemType">
+              <option value="SUBSCRIPTION">SUBSCRIPTION</option>
+              <option value="ONE_TIME">ONE_TIME</option>
+              <option value="ADD_ON">ADD_ON</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>설명</label>
+            <input id="prod-desc" placeholder="상품 설명" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="createProduct()">+ 생성</button>
+        </div>
+
+        <hr class="divider">
+        <div class="section-header">
+          <div class="section-title">목록</div>
+          <span class="help-text" id="product-context-label">그룹을 선택하면 상품이 표시됩니다</span>
+        </div>
+        <div id="prod-list-wrap">
+          <div class="empty-state"><div class="empty-icon">📋</div>그룹을 선택하세요</div>
+        </div>
+      </div>
+
+      <!-- Feature 섹션 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            Feature 관리
+            <span class="badge badge-core">Core REST</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadFeatures()">↻ 새로고침</button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Product *</label>
+            <select id="feat-prod-sel" onchange="loadFeatures()">
+              <option value="">— 상품 선택 —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Feature 코드 *</label>
+            <input id="feat-code" placeholder="예: MAX_USERS" />
+          </div>
+          <div class="form-group">
+            <label>Quota</label>
+            <input id="feat-quota" type="number" placeholder="예: 100" />
+          </div>
+          <div class="form-group">
+            <label>표시 라벨</label>
+            <input id="feat-displayLabel" placeholder="예: 스토리지 50GB" />
+          </div>
+          <div class="form-group">
+            <label>하이라이트</label>
+            <select id="feat-highlighted"><option value="false">아니오</option><option value="true">예</option></select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="addFeature()">+ 추가</button>
+        </div>
+
+        <hr class="divider">
+        <div class="section-header">
+          <div class="section-title">Feature 목록</div>
+        </div>
+        <div id="feat-list-wrap">
+          <div class="empty-state"><div class="empty-icon">✨</div>상품을 선택하세요</div>
+        </div>
+      </div>
+
+      <!-- Price 섹션 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            Price 관리
+            <span class="badge badge-core">Core REST</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadPrices()">↻ 새로고침</button>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label>Product *</label>
+            <select id="price-prod-sel" onchange="loadPrices()">
+              <option value="">— 상품 선택 —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>통화 *</label>
+            <select id="price-currency">
+              <option value="KRW">KRW</option>
+              <option value="USD">USD</option>
+              <option value="JPY">JPY</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>금액 *</label>
+            <input id="price-amount" type="number" placeholder="예: 29000" />
+          </div>
+          <div class="form-group">
+            <label>청구 주기</label>
+            <select id="price-billingPeriod">
+              <option value="MONTHLY">MONTHLY</option>
+              <option value="YEARLY">YEARLY</option>
+              <option value="WEEKLY">WEEKLY</option>
+              <option value="DAILY">DAILY</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>기본가 여부</label>
+            <select id="price-default">
+              <option value="true">예</option>
+              <option value="false">아니오</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="createPrice()">+ 생성</button>
+        </div>
+
+        <hr class="divider">
+        <div class="section-header">
+          <div class="section-title">Price 목록</div>
+        </div>
+        <div id="price-list-wrap">
+          <div class="empty-state"><div class="empty-icon">💰</div>상품을 선택하세요</div>
+        </div>
+      </div>
+
+      <!-- Coupon 섹션 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            Coupon 관리
+            <span class="badge badge-core">Core REST</span>
+          </div>
+        </div>
+
+        <!-- 프로모션 정책 생성 -->
+        <div class="section-header"><div class="section-title">프로모션 정책 생성</div></div>
+        <div class="form-grid-3">
+          <div class="form-group"><label>정책 이름 *</label><input id="cp-name" placeholder="예: 신규 가입 20% 할인" /></div>
+          <div class="form-group"><label>할인 유형 *</label><select id="cp-discountType"><option value="PERCENTAGE">PERCENTAGE</option><option value="FIXED_AMOUNT">FIXED_AMOUNT</option></select></div>
+          <div class="form-group"><label>할인 값 *</label><input id="cp-discountValue" type="number" placeholder="예: 20" /></div>
+          <div class="form-group"><label>최대 사용 횟수</label><input id="cp-maxRedemptions" type="number" placeholder="예: 100" /></div>
+          <div class="form-group"><label>시작일</label><input id="cp-validFrom" type="datetime-local" /></div>
+          <div class="form-group"><label>종료일</label><input id="cp-validUntil" type="datetime-local" /></div>
+          <div class="form-group full"><label>설명</label><input id="cp-desc" placeholder="프로모션 설명" /></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="createPolicy()">+ 정책 생성</button></div>
+
+        <hr class="divider">
+
+        <!-- 쿠폰 발행 -->
+        <div class="section-header"><div class="section-title">쿠폰 발행</div></div>
+        <div class="form-grid">
+          <div class="form-group"><label>정책 ID *</label><input id="cp-policyId" placeholder="정책 UUID" /></div>
+          <div class="form-group"><label>고객 ID *</label><input id="cp-customerId" placeholder="예: cust_test_001" /></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="issueCoupon()">+ 쿠폰 발행</button></div>
+
+        <hr class="divider">
+
+        <!-- 쿠폰 사용 -->
+        <div class="section-header"><div class="section-title">쿠폰 사용</div></div>
+        <div class="form-grid">
+          <div class="form-group"><label>쿠폰 ID *</label><input id="cp-couponId" placeholder="쿠폰 UUID" /></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-danger" onclick="redeemCoupon()">쿠폰 사용 처리</button></div>
+
+        <hr class="divider">
+
+        <!-- 고객별 쿠폰 조회 -->
+        <div class="section-header"><div class="section-title">고객별 쿠폰 조회</div></div>
+        <div class="form-grid">
+          <div class="form-group"><label>고객 ID *</label><input id="cp-searchCustomerId" placeholder="예: cust_test_001" /></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-secondary" onclick="loadCustomerCoupons()">조회</button></div>
+        <div id="coupon-list-wrap" style="margin-top:12px">
+          <div class="empty-state"><div class="empty-icon">🎫</div>고객 ID를 입력하고 조회하세요</div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /tab-manage -->
+
+    <!-- ─────────────────────────────── 탭 2: BFF 조회 ─────────────────────────────── -->
+    <div id="tab-bff" class="tab-panel">
+
+      <!-- 상품 그룹 목록 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            상품 그룹 목록 (BFF)
+            <span class="badge badge-client">Client API</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="bffLoadGroups()">↻ 조회</button>
+        </div>
+        <p class="help-text" style="margin-bottom:12px">GET /api/bff/product-groups — gRPC 경유 조회</p>
+        <div id="bff-groups-wrap">
+          <div class="empty-state"><div class="empty-icon">🔍</div>조회 버튼을 클릭하세요</div>
+        </div>
+      </div>
+
+      <!-- 상품 상세 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            상품 상세 조회 (BFF)
+            <span class="badge badge-client">Client API</span>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="form-group" style="flex:1">
+            <label>Product ID</label>
+            <input id="bff-prod-id" placeholder="상품 UUID 입력" />
+          </div>
+          <button class="btn btn-primary" style="align-self:flex-end" onclick="bffGetProduct()">조회</button>
+        </div>
+        <div id="bff-product-wrap">
+          <div class="empty-state"><div class="empty-icon">📦</div>상품 ID를 입력하세요</div>
+        </div>
+      </div>
+
+      <!-- 가격 계산 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            가격 계산 (BFF)
+            <span class="badge badge-client">Client API</span>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="form-group" style="flex:1">
+            <label>Product ID</label>
+            <input id="bff-price-prod-id" placeholder="상품 UUID 입력" />
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>쿠폰 코드 (선택)</label>
+            <input id="bff-coupon" placeholder="예: WELCOME20" />
+          </div>
+          <button class="btn btn-primary" style="align-self:flex-end" onclick="bffGetPrice()">계산</button>
+        </div>
+        <div id="bff-price-wrap">
+          <div class="empty-state"><div class="empty-icon">💵</div>상품 ID를 입력하세요</div>
+        </div>
+      </div>
+
+      <!-- 플랜 목록 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            플랜 목록 (BFF)
+            <span class="badge badge-client">Client API</span>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="form-group" style="flex:1">
+            <label>Product ID</label>
+            <input id="bff-plans-prod-id" placeholder="상품 UUID 입력" />
+          </div>
+          <button class="btn btn-primary" style="align-self:flex-end" onclick="bffGetPlans()">조회</button>
+        </div>
+        <div id="bff-plans-wrap">
+          <div class="empty-state"><div class="empty-icon">📋</div>상품 ID를 입력하세요</div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /tab-bff -->
+
+    <!-- ─────────────────────────────── 탭 3: 이벤트 로그 ─────────────────────────────── -->
+    <div id="tab-logs" class="tab-panel">
+      <div class="card">
+        <div class="log-toolbar">
+          <div class="card-title">API 호출 히스토리</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="filterLogs('all')" id="log-filter-all" style="border-color:var(--highlight);color:var(--highlight)">전체</button>
+            <button class="btn btn-secondary btn-sm" onclick="filterLogs('core')" id="log-filter-core">Core</button>
+            <button class="btn btn-secondary btn-sm" onclick="filterLogs('client')" id="log-filter-client">Client BFF</button>
+            <button class="btn btn-danger btn-sm" onclick="clearLogs()">✕ 초기화</button>
+          </div>
+        </div>
+        <div id="log-list" class="log-list">
+          <div class="empty-state"><div class="empty-icon">📭</div>API 호출 시 자동으로 로그가 기록됩니다</div>
+        </div>
+      </div>
+    </div>
+    <!-- /tab-logs -->
+
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+const CORE   = 'http://localhost:8081';
+const CLIENT = 'http://localhost:8080';
+
+let state = {
+  groups: [],
+  products: [],
+  selectedGroup: null,
+  selectedProduct: null,
+  logs: [],
+  stats: { total: 0, ok: 0, err: 0, durations: [] },
+  logFilter: 'all',
+};
+
+/* ═══════════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════════ */
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════
+   FLOW DIAGRAM HIGHLIGHT
+═══════════════════════════════════════════════════════ */
+function highlightFlow(type) {
+  // reset
+  ['fn-core','fn-db','fn-kafka','fn-client','fn-grpc','fn-browser'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  ['fa-core','fa-db','fa-kafka','fa-client','fa-grpc'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'flow-arrow';
+  });
+  ['fl-core','fl-db','fl-kafka','fl-client','fl-grpc'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'flow-label';
+  });
+
+  if (type === 'core') {
+    activate('fn-browser'); activate('fn-core'); activate('fn-db');
+    activateArrow('fa-core','core'); activateArrow('fa-db','core');
+    activateLabel('fl-core','core'); activateLabel('fl-db','core');
+  } else if (type === 'client') {
+    activate('fn-browser'); activate('fn-client'); activate('fn-grpc'); activate('fn-core');
+    activateArrow('fa-client','client'); activateArrow('fa-grpc','client');
+    activateLabel('fl-client','client'); activateLabel('fl-grpc','client');
+  }
+
+  // reset after 3s
+  setTimeout(() => {
+    ['fn-core','fn-db','fn-kafka','fn-client','fn-grpc','fn-browser'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    });
+    ['fa-core','fa-db','fa-kafka','fa-client','fa-grpc'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.className = 'flow-arrow';
+    });
+    ['fl-core','fl-db','fl-kafka','fl-client','fl-grpc'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.className = 'flow-label';
+    });
+  }, 3000);
+}
+
+function activate(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+function activateArrow(id, type) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active-' + type);
+  if (el) el.querySelector && (el.style.cssText = '');
+}
+function activateLabel(id, type) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active-' + type);
+}
+
+/* ═══════════════════════════════════════════════════════
+   API FETCH WRAPPER
+═══════════════════════════════════════════════════════ */
+async function apiFetch(url, options = {}, flowType = 'core') {
+  const start = Date.now();
+  const method = options.method || 'GET';
+  highlightFlow(flowType);
+
+  let status = null, responseData = null, requestBody = null;
+  try {
+    if (options.body) requestBody = JSON.parse(options.body);
+  } catch(e) {}
+
+  try {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+      ...options,
+    });
+    const duration = Date.now() - start;
+    status = res.status;
+
+    let text = await res.text();
+    try { responseData = JSON.parse(text); } catch(e) { responseData = text; }
+
+    addLog({ time: new Date(), method, url, status, duration, request: requestBody, response: responseData, flowType });
+    updateStats(status < 400, duration);
+
+    if (!res.ok) {
+      const msg = responseData?.message || responseData?.error || `HTTP ${status}`;
+      throw new Error(msg);
+    }
+    return responseData;
+  } catch (err) {
+    const duration = Date.now() - start;
+    if (status === null) {
+      addLog({ time: new Date(), method, url, status: 0, duration, request: requestBody, response: { error: err.message }, flowType });
+      updateStats(false, duration);
+    }
+    throw err;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   STATS
+═══════════════════════════════════════════════════════ */
+function updateStats(ok, duration) {
+  state.stats.total++;
+  if (ok) state.stats.ok++; else state.stats.err++;
+  state.stats.durations.push(duration);
+  const avg = Math.round(state.stats.durations.reduce((a,b) => a+b, 0) / state.stats.durations.length);
+  document.getElementById('stat-total').textContent = state.stats.total;
+  document.getElementById('stat-ok').textContent    = state.stats.ok;
+  document.getElementById('stat-err').textContent   = state.stats.err;
+  document.getElementById('stat-avg').textContent   = avg + 'ms';
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+function toast(type, title, msg) {
+  const container = document.getElementById('toastContainer');
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `
+    <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
+    <div class="toast-body">
+      <div class="toast-title">${escHtml(title)}</div>
+      ${msg ? `<div class="toast-msg">${escHtml(msg)}</div>` : ''}
+    </div>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('hiding');
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
+/* ═══════════════════════════════════════════════════════
+   LOG
+═══════════════════════════════════════════════════════ */
+function addLog(entry) {
+  state.logs.unshift(entry);
+  document.getElementById('log-count-badge').textContent = state.logs.length;
+  renderLogs();
+}
+
+function renderLogs() {
+  const wrap = document.getElementById('log-list');
+  let logs = state.logs;
+  if (state.logFilter === 'core')   logs = logs.filter(l => l.flowType === 'core');
+  if (state.logFilter === 'client') logs = logs.filter(l => l.flowType === 'client');
+
+  if (!logs.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>로그가 없습니다</div>';
+    return;
+  }
+  wrap.innerHTML = logs.map((l, i) => {
+    const ok = l.status >= 200 && l.status < 400;
+    const timeStr = l.time.toTimeString().split(' ')[0];
+    return `
+      <div class="log-entry">
+        <div class="log-summary" onclick="toggleLog(${i})">
+          <span class="log-time">${timeStr}</span>
+          <span class="log-method method-${l.method}">${l.method}</span>
+          <span class="log-url">${escHtml(l.url)}</span>
+          <span class="log-status ${ok ? 'ok' : 'err'}">${l.status || 'ERR'}</span>
+          <span class="log-duration">${l.duration}ms</span>
+        </div>
+        <div class="log-details" id="log-detail-${i}">
+          <div class="log-details-tabs">
+            <span class="log-dtab active" onclick="showLogTab(${i},'req',this)">요청</span>
+            <span class="log-dtab" onclick="showLogTab(${i},'res',this)">응답</span>
+          </div>
+          <div id="log-req-${i}" class="json-viewer">${syntaxHighlight(l.request)}</div>
+          <div id="log-res-${i}" class="json-viewer" style="display:none">${syntaxHighlight(l.response)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleLog(i) {
+  const el = document.getElementById('log-detail-' + i);
+  el.classList.toggle('open');
+}
+
+function showLogTab(i, tab, btn) {
+  btn.closest('.log-details').querySelectorAll('.log-dtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('log-req-' + i).style.display = tab === 'req' ? 'block' : 'none';
+  document.getElementById('log-res-' + i).style.display = tab === 'res' ? 'block' : 'none';
+}
+
+function filterLogs(type) {
+  state.logFilter = type;
+  document.querySelectorAll('[id^="log-filter-"]').forEach(b => {
+    b.style.borderColor = ''; b.style.color = '';
+  });
+  const active = document.getElementById('log-filter-' + type);
+  if (active) { active.style.borderColor = 'var(--highlight)'; active.style.color = 'var(--highlight)'; }
+  renderLogs();
+}
+
+function clearLogs() {
+  state.logs = [];
+  document.getElementById('log-count-badge').textContent = '0';
+  renderLogs();
+}
+
+/* ═══════════════════════════════════════════════════════
+   JSON SYNTAX HIGHLIGHT
+═══════════════════════════════════════════════════════ */
+function syntaxHighlight(obj) {
+  if (obj === null || obj === undefined) return '<span class="json-null">null</span>';
+  let json;
+  try { json = JSON.stringify(obj, null, 2); } catch(e) { return String(obj); }
+  return json
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+      let cls = 'json-number';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'json-key' : 'json-string';
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    });
+}
+
+function escHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ═══════════════════════════════════════════════════════
+   LOADING STATE HELPERS
+═══════════════════════════════════════════════════════ */
+function setLoading(id, loading) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (loading) {
+    el.innerHTML = `<div class="empty-state"><div class="spinner" style="margin:0 auto 8px"></div>로딩 중...</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRODUCT GROUP
+═══════════════════════════════════════════════════════ */
+async function loadGroups() {
+  setLoading('pg-list-wrap', true);
+  try {
+    const data = await apiFetch(`${CORE}/api/product-groups`, {}, 'core');
+    state.groups = Array.isArray(data) ? data : (data.content || data.data || []);
+    renderGroups();
+    populateGroupSelects();
+  } catch(e) {
+    toast('error', '그룹 목록 로드 실패', e.message);
+    document.getElementById('pg-list-wrap').innerHTML =
+      `<div class="empty-state" style="color:var(--error)">오류: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderGroups() {
+  const wrap = document.getElementById('pg-list-wrap');
+  if (!state.groups.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div>상품 그룹이 없습니다</div>';
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>이름</th><th>슬러그</th><th>타입</th><th>상태</th><th>생성일</th><th>액션</th>
+        </tr></thead>
+        <tbody>
+          ${state.groups.map(g => `
+            <tr>
+              <td class="td-id" title="${escHtml(g.id)}">${escHtml(g.id)}</td>
+              <td>${escHtml(g.name)}</td>
+              <td class="td-mono">${escHtml(g.slug)}</td>
+              <td class="td-mono">${escHtml(g.type || '')}</td>
+              <td><span class="status-badge status-${g.status}"><span class="status-dot"></span>${g.status}</span></td>
+              <td class="td-mono" style="font-size:11px">${fmtDate(g.createdAt)}</td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  ${g.status !== 'ACTIVE'   ? `<button class="btn btn-success btn-sm" onclick="activateGroup('${g.id}')">활성화</button>` : ''}
+                  ${g.status !== 'ARCHIVED' ? `<button class="btn btn-warning btn-sm" onclick="archiveGroup('${g.id}')">아카이브</button>` : ''}
+                </div>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function createGroup() {
+  const name = v('pg-name'), slug = v('pg-slug');
+  if (!name || !slug) { toast('error', '필수 입력', '이름과 슬러그를 입력하세요'); return; }
+
+  try {
+    await apiFetch(`${CORE}/api/product-groups`, {
+      method: 'POST',
+      body: JSON.stringify({ name, slug, description: v('pg-desc'), type: v('pg-type') }),
+    }, 'core');
+    toast('success', 'ProductGroup 생성 완료', name);
+    ['pg-name','pg-slug','pg-desc'].forEach(id => setVal(id, ''));
+    await loadGroups();
+  } catch(e) {
+    toast('error', 'ProductGroup 생성 실패', e.message);
+  }
+}
+
+async function activateGroup(id) {
+  try {
+    await apiFetch(`${CORE}/api/product-groups/${id}/activate`, { method: 'POST' }, 'core');
+    toast('success', '활성화 완료');
+    await loadGroups();
+  } catch(e) { toast('error', '활성화 실패', e.message); }
+}
+
+async function archiveGroup(id) {
+  try {
+    await apiFetch(`${CORE}/api/product-groups/${id}/archive`, { method: 'POST' }, 'core');
+    toast('success', '아카이브 완료');
+    await loadGroups();
+  } catch(e) { toast('error', '아카이브 실패', e.message); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRODUCT
+═══════════════════════════════════════════════════════ */
+function populateGroupSelects() {
+  const sel1 = document.getElementById('prod-pg-sel');
+  const cur1 = sel1.value;
+  sel1.innerHTML = '<option value="">— 그룹 선택 —</option>' +
+    state.groups.map(g => `<option value="${g.id}">${escHtml(g.name)}</option>`).join('');
+  if (cur1) sel1.value = cur1;
+}
+
+async function loadProducts() {
+  const pgId = v('prod-pg-sel');
+  if (!pgId) {
+    document.getElementById('prod-list-wrap').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">📋</div>그룹을 선택하세요</div>';
+    return;
+  }
+  setLoading('prod-list-wrap', true);
+  try {
+    const data = await apiFetch(`${CORE}/api/product-groups/${pgId}`, {}, 'core');
+    state.products = data.products || [];
+    renderProducts();
+    populateProductSelects();
+    document.getElementById('product-context-label').textContent =
+      `${data.name} 의 상품 (${state.products.length}개)`;
+  } catch(e) {
+    toast('error', '상품 목록 로드 실패', e.message);
+    document.getElementById('prod-list-wrap').innerHTML =
+      `<div class="empty-state" style="color:var(--error)">오류: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderProducts() {
+  const wrap = document.getElementById('prod-list-wrap');
+  if (!state.products.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>상품이 없습니다</div>';
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>이름</th><th>표시 이름</th><th>상품 유형</th><th>상태</th><th>생성일</th></tr></thead>
+        <tbody>
+          ${state.products.map(p => `
+            <tr>
+              <td class="td-id" title="${escHtml(p.id)}">${escHtml(p.id)}</td>
+              <td>${escHtml(p.name)}</td>
+              <td>${escHtml(p.displayName || '—')}</td>
+              <td class="td-mono">${escHtml(p.itemType)}</td>
+              <td><span class="status-badge status-${p.status}"><span class="status-dot"></span>${p.status}</span></td>
+              <td class="td-mono" style="font-size:11px">${fmtDate(p.createdAt)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function createProduct() {
+  const pgId = v('prod-pg-sel');
+  const name = v('prod-name');
+  if (!pgId) { toast('error', '필수 선택', '상품 그룹을 선택하세요'); return; }
+  if (!name)  { toast('error', '필수 입력', '상품 이름을 입력하세요'); return; }
+
+  try {
+    await apiFetch(`${CORE}/api/product-groups/${pgId}/products`, {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        displayName: v('prod-displayName'),
+        description: v('prod-desc'),
+        itemType: v('prod-itemType'),
+      }),
+    }, 'core');
+    toast('success', '상품 생성 완료', name);
+    setVal('prod-name', ''); setVal('prod-displayName', ''); setVal('prod-desc', '');
+    await loadProducts();
+  } catch(e) {
+    toast('error', '상품 생성 실패', e.message);
+  }
+}
+
+function populateProductSelects() {
+  ['feat-prod-sel','price-prod-sel'].forEach(selId => {
+    const sel = document.getElementById(selId);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— 상품 선택 —</option>' +
+      state.products.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('');
+    if (cur) sel.value = cur;
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   FEATURE
+═══════════════════════════════════════════════════════ */
+async function loadFeatures() {
+  const prodId = v('feat-prod-sel');
+  if (!prodId) {
+    document.getElementById('feat-list-wrap').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">✨</div>상품을 선택하세요</div>';
+    return;
+  }
+  setLoading('feat-list-wrap', true);
+  try {
+    const data = await apiFetch(`${CORE}/api/products/${prodId}/features`, {}, 'core');
+    renderFeatures(Array.isArray(data) ? data : (data.features || []), prodId);
+  } catch(e) {
+    toast('error', 'Feature 로드 실패', e.message);
+    document.getElementById('feat-list-wrap').innerHTML =
+      `<div class="empty-state" style="color:var(--error)">오류: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderFeatures(features, prodId) {
+  const wrap = document.getElementById('feat-list-wrap');
+  if (!features.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">✨</div>Feature 없음</div>';
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Feature 코드</th><th>Quota</th><th>표시 라벨</th><th>하이라이트</th><th>액션</th></tr></thead>
+        <tbody>
+          ${features.map(f => `
+            <tr>
+              <td class="td-mono">${escHtml(f.featureCode || f.code)}</td>
+              <td class="td-mono">${f.quota ?? '—'}</td>
+              <td>${escHtml(f.displayLabel || '—')}</td>
+              <td>${f.isHighlighted ? '✓' : '—'}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deleteFeature('${prodId}','${escHtml(f.featureCode || f.code)}')">삭제</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function addFeature() {
+  const prodId = v('feat-prod-sel');
+  const code   = v('feat-code');
+  if (!prodId) { toast('error', '필수 선택', '상품을 선택하세요'); return; }
+  if (!code)   { toast('error', '필수 입력', 'Feature 코드를 입력하세요'); return; }
+  const quota = v('feat-quota') ? Number(v('feat-quota')) : null;
+
+  try {
+    await apiFetch(`${CORE}/api/products/${prodId}/features`, {
+      method: 'POST',
+      body: JSON.stringify({ featureCode: code, quota, displayLabel: v('feat-displayLabel'), isHighlighted: v('feat-highlighted') === 'true' }),
+    }, 'core');
+    toast('success', 'Feature 추가 완료', code);
+    setVal('feat-code',''); setVal('feat-quota',''); setVal('feat-displayLabel','');
+    await loadFeatures();
+  } catch(e) {
+    toast('error', 'Feature 추가 실패', e.message);
+  }
+}
+
+async function deleteFeature(prodId, code) {
+  if (!confirm(`Feature "${code}" 를 삭제하시겠습니까?`)) return;
+  try {
+    await apiFetch(`${CORE}/api/products/${prodId}/features/${code}`, { method: 'DELETE' }, 'core');
+    toast('success', 'Feature 삭제 완료');
+    await loadFeatures();
+  } catch(e) { toast('error', 'Feature 삭제 실패', e.message); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRICE
+═══════════════════════════════════════════════════════ */
+async function loadPrices() {
+  const prodId = v('price-prod-sel');
+  if (!prodId) {
+    document.getElementById('price-list-wrap').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">💰</div>상품을 선택하세요</div>';
+    return;
+  }
+  setLoading('price-list-wrap', true);
+  try {
+    const data = await apiFetch(`${CORE}/api/products/${prodId}`, {}, 'core');
+    const prices = data.prices || [];
+    renderPrices(prices, prodId);
+  } catch(e) {
+    toast('error', 'Price 로드 실패', e.message);
+    document.getElementById('price-list-wrap').innerHTML =
+      `<div class="empty-state" style="color:var(--error)">오류: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderPrices(prices, prodId) {
+  const wrap = document.getElementById('price-list-wrap');
+  if (!prices.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div>Price 없음</div>';
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>통화</th><th>금액</th><th>주기</th><th>기본가</th><th>상태</th><th>액션</th></tr></thead>
+        <tbody>
+          ${prices.map(p => `
+            <tr>
+              <td class="td-id" title="${escHtml(p.id)}">${escHtml(p.id)}</td>
+              <td class="td-mono">${escHtml(p.currency)}</td>
+              <td class="td-mono" style="color:var(--success);font-weight:700">${fmtMoney(p.amount, p.currency)}</td>
+              <td class="td-mono">${escHtml(p.billingPeriod || '—')}</td>
+              <td>${p.isDefault ? '<span style="color:var(--success)">✓ 기본</span>' : '—'}</td>
+              <td><span class="status-badge status-${p.status}"><span class="status-dot"></span>${p.status}</span></td>
+              <td><button class="btn btn-danger btn-sm" onclick="deletePrice('${p.id}')">삭제</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function createPrice() {
+  const prodId = v('price-prod-sel');
+  const amount = v('price-amount');
+  if (!prodId) { toast('error', '필수 선택', '상품을 선택하세요'); return; }
+  if (!amount)  { toast('error', '필수 입력', '금액을 입력하세요'); return; }
+  try {
+    await apiFetch(`${CORE}/api/products/${prodId}/prices`, {
+      method: 'POST',
+      body: JSON.stringify({
+        currency: v('price-currency'),
+        amount: Number(amount),
+        billingPeriod: v('price-billingPeriod'),
+        isDefault: v('price-default') === 'true',
+      }),
+    }, 'core');
+    toast('success', 'Price 생성 완료', `${fmtMoney(Number(amount), v('price-currency'))} / ${v('price-billingPeriod')}`);
+    setVal('price-amount','');
+    await loadPrices();
+  } catch(e) {
+    toast('error', 'Price 생성 실패', e.message);
+  }
+}
+
+async function deletePrice(id) {
+  if (!confirm('이 가격을 삭제하시겠습니까?')) return;
+  try {
+    await apiFetch(`${CORE}/api/prices/${id}`, { method: 'DELETE' }, 'core');
+    toast('success', 'Price 삭제 완료');
+    await loadPrices();
+  } catch(e) { toast('error', 'Price 삭제 실패', e.message); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   COUPON
+═══════════════════════════════════════════════════════ */
+async function createPolicy() {
+  const name = v('cp-name');
+  const discountValue = v('cp-discountValue');
+  if (!name || !discountValue) { toast('error', '필수 입력', '정책 이름과 할인 값을 입력하세요'); return; }
+
+  const validFrom = v('cp-validFrom') ? new Date(v('cp-validFrom')).toISOString() : null;
+  const validUntil = v('cp-validUntil') ? new Date(v('cp-validUntil')).toISOString() : null;
+
+  try {
+    const data = await apiFetch(`${CORE}/api/coupons/policies`, {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        description: v('cp-desc'),
+        discountType: v('cp-discountType'),
+        discountValue: Number(discountValue),
+        eligibility: {},
+        applicableProductIds: [],
+        maxRedemptions: Number(v('cp-maxRedemptions') || 0) || null,
+        validFrom,
+        validUntil,
+      }),
+    }, 'core');
+    toast('success', '프로모션 정책 생성 완료', `${name} (ID: ${data.policyId})`);
+    setVal('cp-policyId', data.policyId);
+    ['cp-name','cp-desc','cp-discountValue','cp-maxRedemptions'].forEach(id => setVal(id, ''));
+  } catch(e) {
+    toast('error', '정책 생성 실패', e.message);
+  }
+}
+
+async function issueCoupon() {
+  const policyId = v('cp-policyId');
+  const customerId = v('cp-customerId');
+  if (!policyId || !customerId) { toast('error', '필수 입력', '정책 ID와 고객 ID를 입력하세요'); return; }
+
+  try {
+    const data = await apiFetch(`${CORE}/api/coupons/issue`, {
+      method: 'POST',
+      body: JSON.stringify({ policyId, customerId }),
+    }, 'core');
+    toast('success', '쿠폰 발행 완료', `쿠폰 ID: ${data.couponId}`);
+    setVal('cp-couponId', data.couponId);
+  } catch(e) {
+    toast('error', '쿠폰 발행 실패', e.message);
+  }
+}
+
+async function redeemCoupon() {
+  const couponId = v('cp-couponId');
+  if (!couponId) { toast('error', '필수 입력', '쿠폰 ID를 입력하세요'); return; }
+
+  try {
+    await apiFetch(`${CORE}/api/coupons/${couponId}/redeem`, { method: 'POST' }, 'core');
+    toast('success', '쿠폰 사용 완료', `상태: REDEEMED`);
+  } catch(e) {
+    toast('error', '쿠폰 사용 실패', e.message);
+  }
+}
+
+async function loadCustomerCoupons() {
+  const customerId = v('cp-searchCustomerId');
+  if (!customerId) { toast('error', '필수 입력', '고객 ID를 입력하세요'); return; }
+  setLoading('coupon-list-wrap', true);
+  try {
+    const data = await apiFetch(`${CORE}/api/coupons/customer/${encodeURIComponent(customerId)}`, {}, 'core');
+    const coupons = Array.isArray(data) ? data : [];
+    const wrap = document.getElementById('coupon-list-wrap');
+    if (!coupons.length) {
+      wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">🎫</div>쿠폰 없음</div>';
+      return;
+    }
+    wrap.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>쿠폰 ID</th><th>정책 이름</th><th>할인</th><th>상태</th><th>발행일</th></tr></thead>
+          <tbody>
+            ${coupons.map(c => `
+              <tr>
+                <td class="td-id" title="${escHtml(c.couponId || c.id)}">${escHtml(c.couponId || c.id)}</td>
+                <td>${escHtml(c.policyName || '—')}</td>
+                <td class="td-mono">${c.discountType === 'PERCENTAGE' ? c.discountValue + '%' : fmtMoney(c.discountValue, 'KRW')}</td>
+                <td><span class="status-badge status-${c.status}"><span class="status-dot"></span>${c.status}</span></td>
+                <td class="td-mono" style="font-size:11px">${fmtDate(c.issuedAt || c.createdAt)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) {
+    toast('error', '쿠폰 조회 실패', e.message);
+    document.getElementById('coupon-list-wrap').innerHTML =
+      `<div class="empty-state" style="color:var(--error)">오류: ${escHtml(e.message)}</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   BFF
+═══════════════════════════════════════════════════════ */
+async function bffLoadGroups() {
+  setLoading('bff-groups-wrap', true);
+  try {
+    const data = await apiFetch(`${CLIENT}/api/bff/product-groups`, {}, 'client');
+    const groups = Array.isArray(data) ? data : (data.content || data.data || data.groups || []);
+    const wrap = document.getElementById('bff-groups-wrap');
+    if (!groups.length) {
+      wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div>그룹 없음</div>';
+      return;
+    }
+    wrap.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>이름</th><th>슬러그</th><th>상태</th></tr></thead>
+          <tbody>
+            ${groups.map(g => `
+              <tr>
+                <td class="td-id" title="${escHtml(g.id)}">${escHtml(g.id)}</td>
+                <td>${escHtml(g.name)}</td>
+                <td class="td-mono">${escHtml(g.slug)}</td>
+                <td><span class="status-badge status-${g.status}"><span class="status-dot"></span>${g.status}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) {
+    toast('error', 'BFF 그룹 조회 실패', e.message);
+    document.getElementById('bff-groups-wrap').innerHTML =
+      `<div class="empty-state" style="color:var(--error)">오류: ${escHtml(e.message)}</div>`;
+  }
+}
+
+async function bffGetProduct() {
+  const id = v('bff-prod-id').trim();
+  if (!id) { toast('error', '필수 입력', '상품 ID를 입력하세요'); return; }
+  setLoading('bff-product-wrap', true);
+  try {
+    const data = await apiFetch(`${CLIENT}/api/bff/products/${id}`, {}, 'client');
+    const wrap = document.getElementById('bff-product-wrap');
+    wrap.innerHTML = `
+      <div class="bff-result-card">
+        <div class="bff-meta">
+          <div class="bff-meta-item"><div class="bff-meta-label">이름</div><div class="bff-meta-value">${escHtml(data.name)}</div></div>
+          <div class="bff-meta-item"><div class="bff-meta-label">상품 유형</div><div class="bff-meta-value">${escHtml(data.itemType)}</div></div>
+          <div class="bff-meta-item"><div class="bff-meta-label">상태</div><div class="bff-meta-value"><span class="status-badge status-${data.status}"><span class="status-dot"></span>${data.status}</span></div></div>
+          <div class="bff-meta-item"><div class="bff-meta-label">표시 이름</div><div class="bff-meta-value">${escHtml(data.displayName)}</div></div>
+        </div>
+        <div class="section-title" style="margin-bottom:8px">전체 응답</div>
+        <div class="json-viewer">${syntaxHighlight(data)}</div>
+      </div>`;
+  } catch(e) {
+    toast('error', '상품 조회 실패', e.message);
+    document.getElementById('bff-product-wrap').innerHTML =
+      `<div class="empty-state" style="color:var(--error)">오류: ${escHtml(e.message)}</div>`;
+  }
+}
+
+async function bffGetPrice() {
+  const id = v('bff-price-prod-id').trim();
+  if (!id) { toast('error', '필수 입력', '상품 ID를 입력하세요'); return; }
+  const coupon = v('bff-coupon').trim();
+  const url = `${CLIENT}/api/bff/products/${id}/price${coupon ? '?couponCode=' + encodeURIComponent(coupon) : ''}`;
+  setLoading('bff-price-wrap', true);
+  try {
+    const data = await apiFetch(url, {}, 'client');
+    const wrap = document.getElementById('bff-price-wrap');
+    const hasDiscount = data.discountedAmount !== undefined && data.discountedAmount !== data.amount;
+    wrap.innerHTML = `
+      <div class="bff-result-card">
+        <div class="bff-meta">
+          <div class="bff-meta-item">
+            <div class="bff-meta-label">가격</div>
+            <div>
+              ${hasDiscount
+                ? `<div class="price-original">${fmtMoney(data.amount, data.currency)}</div>
+                   <div class="price-highlight">${fmtMoney(data.discountedAmount, data.currency)}</div>`
+                : `<div class="price-highlight">${fmtMoney(data.amount, data.currency)}</div>`}
+            </div>
+          </div>
+          <div class="bff-meta-item"><div class="bff-meta-label">통화</div><div class="bff-meta-value">${escHtml(data.currency)}</div></div>
+          <div class="bff-meta-item"><div class="bff-meta-label">청구 주기</div><div class="bff-meta-value">${escHtml(data.billingPeriod || '—')}</div></div>
+          ${coupon ? `<div class="bff-meta-item"><div class="bff-meta-label">쿠폰</div><div class="bff-meta-value"><span class="coupon-badge">${escHtml(coupon)}</span></div></div>` : ''}
+        </div>
+        <div class="section-title" style="margin-bottom:8px">전체 응답</div>
+        <div class="json-viewer">${syntaxHighlight(data)}</div>
+      </div>`;
+  } catch(e) {
+    toast('error', '가격 계산 실패', e.message);
+    document.getElementById('bff-price-wrap').innerHTML =
+      `<div class="empty-state" style="color:var(--error)">오류: ${escHtml(e.message)}</div>`;
+  }
+}
+
+async function bffGetPlans() {
+  const id = v('bff-plans-prod-id').trim();
+  if (!id) { toast('error', '필수 입력', '상품 ID를 입력하세요'); return; }
+  setLoading('bff-plans-wrap', true);
+  try {
+    const data = await apiFetch(`${CLIENT}/api/bff/products/${id}/plans`, {}, 'client');
+    const plans = Array.isArray(data) ? data : (data.plans || data.content || []);
+    const wrap = document.getElementById('bff-plans-wrap');
+    if (!plans.length) {
+      wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>플랜 없음</div>';
+      return;
+    }
+    wrap.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>이름</th><th>상품 유형</th><th>금액</th><th>주기</th><th>상태</th></tr></thead>
+          <tbody>
+            ${plans.map(p => `
+              <tr>
+                <td>${escHtml(p.name)}</td>
+                <td class="td-mono">${escHtml(p.itemType)}</td>
+                <td class="td-mono" style="color:var(--success)">${p.amount ? fmtMoney(p.amount, p.currency) : '—'}</td>
+                <td class="td-mono">${escHtml(p.billingPeriod || '—')}</td>
+                <td><span class="status-badge status-${p.status}"><span class="status-dot"></span>${p.status}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) {
+    toast('error', '플랜 조회 실패', e.message);
+    document.getElementById('bff-plans-wrap').innerHTML =
+      `<div class="empty-state" style="color:var(--error)">오류: ${escHtml(e.message)}</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════ */
+function v(id) { return (document.getElementById(id) || {}).value || ''; }
+function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+
+function fmtDate(s) {
+  if (!s) return '—';
+  try { return new Date(s).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }); }
+  catch(e) { return s; }
+}
+
+function fmtMoney(amount, currency) {
+  if (amount === undefined || amount === null) return '—';
+  try {
+    return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: currency || 'KRW' }).format(amount);
+  } catch(e) {
+    return `${amount} ${currency || ''}`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  loadGroups();
+  filterLogs('all');
+});
+</script>
+</body>
+</html>
